@@ -26,10 +26,10 @@
 """
 
 import math
-import numpy
 import ctypes
 import sys
 import cv2
+import os
 from ctypes.wintypes import *
 import pygame
 from pygame.locals import *
@@ -39,9 +39,15 @@ wallVar = 3
 # Reading image
 # str(input("Input file with containing folder with structure; folder/file:"))
 
-def path_per_OS():
-
-
+def path_per_OS(path_to_image):
+    path = os.path.join(os.path.abspath(), path_to_image)
+    if sys.platform == "win32":
+        #do stuff to make the path work
+        return
+    elif sys.platform == "linux":
+        #do stuff to make sure the path works for linux
+        return
+    return path
 
 
 img2 = cv2.imread("//home//gronk//Desktop//visual-studio-code-repository//TM//TM code//image.png", cv2.IMREAD_COLOR)
