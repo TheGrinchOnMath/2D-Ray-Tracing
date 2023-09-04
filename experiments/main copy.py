@@ -39,19 +39,17 @@ wallVar = 3
 # Reading image
 # str(input("Input file with containing folder with structure; folder/file:"))
 
-def path_per_OS(path_to_image):
-    path = os.path.join(os.path.abspath(), path_to_image)
-    if sys.platform == "win32":
-        #do stuff to make the path work
-        return
-    elif sys.platform == "linux":
-        #do stuff to make sure the path works for linux
-        return
-    return path
+def path_fiddler(dir):
+    result = ""
+    for element in (os.path.join(os.getcwd(), dir)):
+        if element == "\\" or element == "/":
+            result += element
+        result += element
+    return result
 
-
-img2 = cv2.imread("//home//gronk//Desktop//visual-studio-code-repository//TM//TM code//image.png", cv2.IMREAD_COLOR)
-img = cv2.imread("//home//gronk//Desktop//visual-studio-code-repository//TM//TM code//image.png", cv2.IMREAD_GRAYSCALE)
+dir = path_fiddler("assets/image.png")
+img2 = cv2.imread(dir, cv2.IMREAD_COLOR)
+img = cv2.imread(dir, cv2.IMREAD_GRAYSCALE)
 
 #img2 = cv2.imread("C:\\Users\\kille\\Desktop\\vscode git repository\\visual-studio-code-repository\\Obsidian\\school\\TM\\TM code\\image.png", cv2.IMREAD_COLOR)
 # Reading same image in another 

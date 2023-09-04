@@ -50,8 +50,8 @@ def path_per_OS(path_to_image):
     return path
 
 
-img2 = cv2.imread("//home//gronk//Desktop//visual-studio-code-repository//TM//TM code//image.png", cv2.IMREAD_COLOR)
-img = cv2.imread("//home//gronk//Desktop//visual-studio-code-repository//TM//TM code//image.png", cv2.IMREAD_GRAYSCALE)
+img2 = cv2.imread("//home//gronk//Desktop//TM/2D-Ray-Tracing//assets//image.png", cv2.IMREAD_COLOR)
+img = cv2.imread("//home//gronk//Desktop//TM/2D-Ray-Tracing//assets//image.png", cv2.IMREAD_GRAYSCALE)
 
 #img2 = cv2.imread("C:\\Users\\kille\\Desktop\\vscode git repository\\visual-studio-code-repository\\Obsidian\\school\\TM\\TM code\\image.png", cv2.IMREAD_COLOR)
 # Reading same image in another 
@@ -90,7 +90,7 @@ else:
     screenx, screeny = screen.get_size()
     pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
 
-NUM_RAYS = 5000
+NUM_RAYS = 50
 WINDOW_SIZE = (screenx, screeny)
 MAX_REFLECTIONS = 50
 display = pygame.Surface(WINDOW_SIZE)
