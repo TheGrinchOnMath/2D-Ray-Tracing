@@ -35,43 +35,7 @@ import pygame
 from pygame.locals import *
 from pygame.math import *
 
-wallVar = 3
-# Reading image
-# str(input("Input file with containing folder with structure; folder/file:"))
 
-def path_per_OS(path_to_image):
-    path = os.path.join(os.path.abspath(), path_to_image)
-    if sys.platform == "win32":
-        #do stuff to make the path work
-        return
-    elif sys.platform == "linux":
-        #do stuff to make sure the path works for linux
-        return
-    return path
-
-
-img2 = cv2.imread("//home//gronk//Desktop//TM/2D-Ray-Tracing//assets//image.png", cv2.IMREAD_COLOR)
-img = cv2.imread("//home//gronk//Desktop//TM/2D-Ray-Tracing//assets//image.png", cv2.IMREAD_GRAYSCALE)
-
-#img2 = cv2.imread("C:\\Users\\kille\\Desktop\\vscode git repository\\visual-studio-code-repository\\Obsidian\\school\\TM\\TM code\\image.png", cv2.IMREAD_COLOR)
-# Reading same image in another 
-# variable and converting to gray scale.
-#img = cv2.imread("C:\\Users\\kille\\Desktop\\vscode git repository\\visual-studio-code-repository\\Obsidian\\TM\\TM code\\image.png", cv2.IMREAD_GRAYSCALE)
-# Converting image to a binary image
-# ( black and white only image).
-_, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
-  
-# Detecting contours in image.
-contours, _= cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-# Going through every contours found in the image.
-for cnt in contours :
-  
-    approx = cv2.approxPolyDP(cnt, wallVar, True)  # 0.009 * cv2.arcLength(cnt, True)
-  
-    # Used to flatted the array containing
-    # the co-ordinates of the vertices.
-    n = approx.ravel() 
-    
 pygame.init()
 # creates a fullscreen window after checking the display size
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
@@ -90,6 +54,8 @@ else:
     screenx, screeny = screen.get_size()
     pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
 
+wallVar = 3
+DIR = ["assets", "image.png"]
 NUM_RAYS = 50
 WINDOW_SIZE = (screenx, screeny)
 MAX_REFLECTIONS = 50
@@ -97,6 +63,41 @@ display = pygame.Surface(WINDOW_SIZE)
 mirrors = []
 rays = []
 running = True
+
+def path_fiddler(dir:list): # this function takes the current working directory of the file and adds the specified directory to it, 
+    temp = ""               # then modifies the resulting string to double any slashes or backslashes, so that opencv actually works
+    result = ""               
+    for element in dir:
+        temp = os.path.join(temp, element)
+    for n in (os.path.join(os.getcwd(), temp)):
+        if n == ("\\" or "/"):
+            result += n
+        result += n
+    return result
+
+
+def cv2_img_detect(dir):
+    img = cv2.imread(path_fiddler(dir), cv2.IMREAD_GRAYSCALE)
+
+    # Reading same image in another 
+    # variable and converting to gray scale.
+    # Converting image to a binary image
+    # ( black and white only image).
+    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    
+    # Detecting contours in image.
+    contours, _= cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # Going through every contours found in the image.
+    for cnt in contours :
+        approx = cv2.approxPolyDP(cnt, wallVar, True)  # 0.009 * cv2.arcLength(cnt, True)
+    
+        # Used to flatted the array containing
+        # the co-ordinates of the vertices.
+        n = approx.ravel() 
+    return n
+
+
+
   
 class Ray:
     def __init__(self, reflections, vector, origin):
@@ -172,7 +173,7 @@ def drawRays(rays, mirrors, color = (200, 200, 20)):
     for ray in rays:
         ray.delete()
 
-def generateMirrors():
+def generateMirrors(n):
     mirrors.clear()
     mirrors.append(Mirror((0, 0), (screenx, 0)))
     mirrors.append(Mirror((0, 0), (0, screeny)))
@@ -207,7 +208,7 @@ def draw():
     screen.blit(display, (0, 0))
 
     pygame.display.update()
-generateMirrors()
+generateMirrors(cv2_img_detect(DIR))
 
 while running:
     mx, my = pygame.mouse.get_pos()
@@ -223,4 +224,4 @@ while running:
             
     draw()
 pygame.quit()
-sys.exit()    
+sys.exit()
