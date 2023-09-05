@@ -1,8 +1,11 @@
 learn how to work with array datatype, to make ray storage better
-get the position functions for the ray-wall collisions
+get the position functions for the ray-wall collisions (could or mayhaps should be with vector / matrix functions for better speed)
 make gui
 learn how to work with json files
 make two part render function
 part one: the render takes the physics data and paints the rays onto the walls
 part two: wipes the data and screen upon mouse movement
 work out how to make the physics loop and the render loop independent (multithreading and processing)
+multithreading and multiprocessing: work out what the best way of making the renders and physics separate and most optimized
+
+physics: find a way of doing the ellipse-line and circle-line collision calculations in the most efficient way possible

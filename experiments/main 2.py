@@ -1,7 +1,27 @@
-import pygame, os, cv2, sys
+import pygame, os, cv2, sys, ctypes
+from engine import *
 
 pygame.init()
 
+
+screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
+if sys.platform == "win32": #for windows systems
+    HWND = pygame.display.get_wm_info()['window']
+    SW_MAXIMIZE = 3
+    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
+    screenx, screeny = screen.get_size()
+elif sys.platform == "linux":
+    screen = pygame.display.set_mode()
+    screenx, screeny = screen.get_size()
+    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+# pygame.RESIZABLE makes the window resizable
+else:
+    screen = pygame.display.set_mode()
+    screenx, screeny = screen.get_size()
+    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+
+
+    
 RAYS = 500 # <-- this variable sets the amount of rays initially emitted from the cursor's position
 REFLECT_CTR = 0 # <-- this variable keeps track of how many reflections have been calculated 
                 #     (could be used to stop the physics after a set number of reflections)
@@ -29,21 +49,6 @@ def json_reader():
     # the wall data
     pass
 
-screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
-if sys.platform == "win32": #for windows systems
-    HWND = pygame.display.get_wm_info()['window']
-    SW_MAXIMIZE = 3
-    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
-    screenx, screeny = screen.get_size()
-elif sys.platform == "linux":
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
-# pygame.RESIZABLE makes the window resizable
-else:
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
 
 display = pygame.Surface((screenx, screeny))
 
