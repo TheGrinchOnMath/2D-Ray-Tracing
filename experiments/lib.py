@@ -12,7 +12,7 @@ def line_ellipse_collision(): # checks for if the ray hit the existing bit of th
     pass
 
 
-def render_refresh(): # this function resets the screen (aka paints the whole thing black and removes the rays)
+def reset(): # this function resets the screen (aka paints the whole thing black and removes the rays)
     #wipe the ray data, includes main array(s) and counter var
     #blacken the screen, add the walls back in, this could be where you could choose to change the walls
     #means calling a read and data interpret function to get json data or the cv2 reader function to get new wall data

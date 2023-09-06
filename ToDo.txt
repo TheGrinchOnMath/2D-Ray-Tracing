@@ -6,6 +6,11 @@ work out how to make the physics loop and the render loop independent (multithre
 multithreading and multiprocessing: work out what the best way of making the renders and physics separate and most optimized
 find a way of doing the ellipse-line and circle-line collision calculations in the most efficient way possible
 take a look at licenses that suit my work better than the MIT license (especially if i add my report to this repo)
+make only the necessary variables global, also delete variables when they are no longer used
+
+
+
+
 
 physics: 
 vector maker: take line equation, find x for y = 0 and y for x = 0, make vector unit length
