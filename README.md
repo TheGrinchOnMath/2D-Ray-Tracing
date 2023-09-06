@@ -104,4 +104,4 @@ links consulted:
    (consulted for the last time on the 30.8.2023)
 
    https://realpython.com/python-json/
-   working with json files in python (for gui customizer) (last consulted on the 30.8.2023)
+   working with json files in python (for gui customizer) (last consulted on the 5.9.2023)

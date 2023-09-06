@@ -2,10 +2,42 @@ learn how to work with array datatype, to make ray storage better
 get the position functions for the ray-wall collisions (could or mayhaps should be with vector / matrix functions for better speed)
 make gui
 learn how to work with json files
-make two part render function
-part one: the render takes the physics data and paints the rays onto the walls
-part two: wipes the data and screen upon mouse movement
 work out how to make the physics loop and the render loop independent (multithreading and processing)
 multithreading and multiprocessing: work out what the best way of making the renders and physics separate and most optimized
+find a way of doing the ellipse-line and circle-line collision calculations in the most efficient way possible
 
-physics: find a way of doing the ellipse-line and circle-line collision calculations in the most efficient way possible
+physics: 
+vector maker: take line equation, find x for y = 0 and y for x = 0, make vector unit length
+normal vector maker: transform coords or vector vars and output normal vector
+new ray creation function: out (starting position, vector x and vector y values) into new array
+render feeder: during new ray creation, copy starting and collision positions to new array (will be used for the paint to screen bit)
+
+Main:
+file handler: take either json or image path, detect file type and then process json or image --> some kind of storage
+
+Render:
+render module: takes the new array from the render feeder and paints the set of rays
+main render function:gets activated on mouse movement, wipes ray data and refreshes screen (wall load could happen here)
+
+main Loop build: (all functions)
+
+init: 
+load new wall objects from file handler data and paint to screen, query mouse position and initiate ray data array
+(file handler could be the function that reads and writes wall data files such as images and handles the wall objects)
+
+mouse:
+if the mouse moves, trigger reset
+
+render:
+reset:
+wipe the ray arrays and paint screen black, call init function
+
+module:
+get data from physics loop and paint to screen
+
+
+Physics loop:
+runs until the reset kills it
+gets started by the init function in an independent loop
+goes through an array of ray data to generate new rays using intersection detection and reflection functions
+(optional: make a bit that dumps arrays to file for later use)
