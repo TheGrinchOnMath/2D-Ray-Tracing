@@ -105,3 +105,6 @@ links consulted:
 
    https://realpython.com/python-json/
    working with json files in python (for gui customizer) (last consulted on the 5.9.2023)
+
+   https://stackoverflow.com/questions/14046745/call-function-without-creating-an-instance-of-class-first
+   static methods in python, or how to use methods from a class without creating any objects with it
