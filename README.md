@@ -114,3 +114,6 @@ links consulted:
 
    https://docs.python.org/3/library/exceptions.html
    all python 3 exceptions
+
+   https://stackoverflow.com/questions/53952214/how-can-i-find-out-which-python-virtual-environment-i-am-using
+   how to check for environments in python
