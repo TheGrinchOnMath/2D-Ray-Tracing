@@ -108,3 +108,9 @@ links consulted:
 
    https://stackoverflow.com/questions/14046745/call-function-without-creating-an-instance-of-class-first
    static methods in python, or how to use methods from a class without creating any objects with it
+
+   https://www.w3schools.com/python/python_try_except.asp
+   how to handle errors and exceptions
+
+   https://docs.python.org/3/library/exceptions.html
+   all python 3 exceptions
