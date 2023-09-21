@@ -99,6 +99,7 @@ links consulted:
    path_fiddler function research:
    https://realpython.com/python-strings/ 
    how strings work in python
+
    https://www.freecodecamp.org/news/python-get-current-directory/
    how to get the current working directory path using the integrated os library
    (consulted for the last time on the 30.8.2023)
@@ -107,13 +108,19 @@ links consulted:
    working with json files in python (for gui customizer) (last consulted on the 5.9.2023)
 
    https://stackoverflow.com/questions/14046745/call-function-without-creating-an-instance-of-class-first
-   static methods in python, or how to use methods from a class without creating any objects with it
+   static methods in python, or how to use methods from a class without creating any objects with it (last consulted on the 20.9.2023)
 
    https://www.w3schools.com/python/python_try_except.asp
-   how to handle errors and exceptions
+   how to handle errors and exceptions (last consulted on the 20.9.2023)
 
    https://docs.python.org/3/library/exceptions.html
-   all python 3 exceptions
+   all python 3 exceptions (last consulted on the 20.9.2023)
 
    https://stackoverflow.com/questions/53952214/how-can-i-find-out-which-python-virtual-environment-i-am-using
-   how to check for environments in python
+   how to check for environments in python (last consulted on the 20.9.2023)
+
+   https://realpython.com/read-write-files-python/
+   how to read and write files in python (last consulted on the 20.9.2023)
+
+   https://docs.python.org/3/library/pathlib.html
+   pathlib official documentation python (V2) (last consulted on the 20.9.2023)
