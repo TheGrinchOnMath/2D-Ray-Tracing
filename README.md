@@ -117,3 +117,9 @@ links consulted:
 
    https://stackoverflow.com/questions/53952214/how-can-i-find-out-which-python-virtual-environment-i-am-using
    how to check for environments in python
+   
+   https://stackoverflow.com/questions/2822089/how-to-link-to-part-of-the-same-document-in-markdown
+   how to add header references in markdown
+
+   https://stackoverflow.com/questions/4823468/comments-in-markdown
+   how to add comments in markdown (the kind that no one else can see, even in view source)
