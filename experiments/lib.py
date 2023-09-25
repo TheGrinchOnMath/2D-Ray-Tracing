@@ -1,7 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
+import os, pygame, sys
 
 
+def read(path):
+    pass
+
+def write(path):
+    try:
+        if os.path.exists(path):
+            str(input("file exists, take"))
+            
+
+def file_fiddler():
+    pass
 
 
 class Render:
