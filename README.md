@@ -131,3 +131,6 @@ links consulted:
 
    https://docs.python.org/3/library/pathlib.html
    pathlib official documentation python (V2) (last consulted on the 20.9.2023)
+
+   https://numpy.org/doc/stable
+   Numpy documentation (last consulted on the 29.9.2023)

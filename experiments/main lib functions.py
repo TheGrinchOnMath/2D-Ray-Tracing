@@ -28,6 +28,7 @@ def path_fiddler(dirs):
     CWD = os.getcwd()
     for dir in dirs try:
         if type(dir) != "string":
-            raise 
+            raise TypeError("not a string")
+        
 
 # find out how to make the code not be able to write outside of the main folder
