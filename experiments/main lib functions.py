@@ -1,4 +1,5 @@
 import os, json, sys, pathlib
+import numpy as np
 
 def read(path):
     with open(path, "r") as file_temp:
@@ -26,9 +27,28 @@ def write(data, path):
 
 def path_fiddler(dirs):
     CWD = os.getcwd()
-    for dir in dirs try:
-        if type(dir) != "string":
-            raise TypeError("not a string")
+    for dir in dirs:
+        try:
+            if type(dir) != "string":
+                raise TypeError("not a string")
+        except TypeError:
+            print("Error: not a string")
         
 
-# find out how to make the code not be able to write outside of the main folder
+def init_rays(mpos:tuple, n_rays:int):
+    arr = np.empty((n_rays, 4))
+    for i in range(0, n_rays):
+        angle = 2 * np.pi * (i / n_rays)
+        v_x = np.cos(angle)
+        v_y = np.sin(angle)
+
+        mx, my = mpos
+        if i < n_rays:
+            arr[i:i+1] = [v_x, v_y, mx, my]
+        else:
+            arr[i] = [v_x, v_y, mx, my] 
+
+    return arr
+        
+
+# find out how to make the code not be able to write outside of the main folder (add .. to the path or give full path)

@@ -1,4 +1,4 @@
-import os
+import os, pathlib, cv2
 import numpy as np
 import multiprocessing as mp
 
@@ -41,7 +41,9 @@ def init_rays(mpos:tuple, n_rays:int):
 
     return arr
 
-def init_walls()
+
+
+
 print(init_rays((10, 10), 100))
 
 def calculate(ray, walls): # ray is the data for the ray, coming from the array, wall is the wall object
@@ -89,3 +91,36 @@ for n in range(0, 3):
 
 """
 # to replace an entire columnn, do array[:,i] where i is the value of the collumn minus 1 (make sure that the array is of the right dimensions)
+
+
+
+def read_file(path:str, type:str): # returns either the json data or the contour coords list from the image processing
+    if type == "json":
+        with read_file(path, "r") as fi:
+            try:
+                print(fi)
+            except:
+                print("something went wrong when accessing:", path)
+    elif type == "image":
+        with cv2.imread(path, cv2.IMREAD_GRAYSCALE) as img:
+            try:
+                _, thresh = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+                cont, _ = cv2.findContours(thresh, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+                for cnt in cont:
+                    approx = cv2.approxPolyDP(cnt, 3, True)
+                    n = approx.ravel()
+                    print(n)
+                    return n
+            except:
+                print("something went wrong with the image")
+    else:
+        raise SyntaxError("wrong file type specified, please specify either [image] or [json]")
+    
+
+def render(ray_data, walls):
+    for n in np.shape(ray_data)[0]:
+        # add some code here that paints the image to a temp screen using pygame or sth
+        continue
+    for wall in walls:
+        # add some more code here to paint linear and nonlinear walls with pygame
+        continue
