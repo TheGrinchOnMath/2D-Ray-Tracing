@@ -41,6 +41,7 @@ def init_rays(mpos:tuple, n_rays:int):
 
     return arr
 
+def init_walls()
 print(init_rays((10, 10), 100))
 
 def calculate(ray, walls): # ray is the data for the ray, coming from the array, wall is the wall object
