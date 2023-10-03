@@ -124,3 +124,8 @@ def render(ray_data, walls):
     for wall in walls:
         # add some more code here to paint linear and nonlinear walls with pygame
         continue
+
+
+arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
+for a in arr: # iterates through array lines, 3 with the current array
+    print(a) # prints every line in turn
