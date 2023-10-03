@@ -66,7 +66,7 @@ class Render:
         pass
 
     @staticmethod
-    def render(): # this boi here takes data from the copy of the array and paints the rays onto the screen
+    def render(ray_data_arr, walls): # this boi here takes data from the copy of the array and paints the rays onto the screen
         pass
 
 class Physics:
