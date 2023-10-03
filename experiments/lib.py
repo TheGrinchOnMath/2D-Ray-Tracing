@@ -32,9 +32,15 @@ def write_file(path):
             print("this file already exists. Overwrite?\n")
             if str(input()) == ("y" or "yes" or "Y" or "Yes"):
                 print("ok, attempting to overwrite file...")
+                with open(path, "w") as write_file:
+                    pass
+                    #add code here to write data to file. This could be a config file, the OG data file, the bit where the GUI does the saving
+
+
                 # add here a way to make sure the code is allowed to actually delete the file (check the path and file type, do not write outside of saves folder maybe)
-    except:
-        pass
+    except PermissionError:
+        print("could not write file due to lack of permissions, aborting...")
+        
             
 def path_fiddler(dirs:list): # dirs has to be all folders leading from current working directory to the end file, so that the path can be used for file operations
     CWD = os.getcwd()
@@ -72,6 +78,16 @@ class Physics:
     def line_circle_collision(): # checks for if the ray actually is supposed to collide with this circle and then does the position and reflected vector calculations
         pass
 
+        # this needs the equation for x and y, given a set of predetermined parameters
+
+
     @staticmethod
     def line_ellipse_collision(): # checks for if the ray hit the existing bit of the ellipse (use line-line-collision for this) and then does the calculations for a new vector and the intersection point
         pass
+
+        """
+        this bit needs to first check collisions between the ray and the line connecting the extremities of the arc (cut off ellipse), then check if it is supposed to collide, then save the intersection spot
+        a line-line intersection can be used for this
+        """
+
+        # think about modularity extensiveness, how phat should any given function be to optimize exection time and task-switching-related strains?
