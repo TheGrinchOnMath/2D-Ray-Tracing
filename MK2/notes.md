@@ -16,3 +16,5 @@ the physics part hands over a numpy array to the render containing ray start and
 - look into versioning on github (make a release 1 and 2)
 - look into pathlib for MK2
 - polish MK1 code, small optimizations such as error handling
+- look into how lines, circles and ellipses should be stored
+s
