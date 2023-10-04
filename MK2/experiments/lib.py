@@ -91,3 +91,18 @@ class Physics:
         """
 
         # think about modularity extensiveness, how phat should any given function be to optimize exection time and task-switching-related strains?
+
+"""
+
+what variables do i want to use?
+I need:
+> ray origin and directing vector
+> Line_Wall start and end, normal vector
+> Ellipse_Wall start, end, line_wall for step 1 collision checking. Some kind of variables for step 2 collision checking
+that define the curvature of the ellipses. when creating, first determine the A, B coordinates and 
+the sum of distances ||AP|| + ||BP||
+>Circle_Wall start, end, radius, offset, line that defines which bit exists
+
+
+
+"""
