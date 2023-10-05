@@ -104,5 +104,9 @@ the sum of distances ||AP|| + ||BP||
 >Circle_Wall start, end, radius, offset, line that defines which bit exists
 
 
+I need to figure out the best way to convert one definition of line/circle/ellipse into another.
+mainly vector + point notation to explicit cartesian notation.
+I need the equation for the line tangent to the point(s) of intersection of an ellipse
+
 
 """
