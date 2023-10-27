@@ -25,19 +25,14 @@
 
 """
 
-import math
-import ctypes
-import sys
-import cv2
-import os
+import math, ctypes, sys, cv2, os, pygame
 from ctypes.wintypes import *
-import pygame
 from pygame.locals import *
 from pygame.math import *
 
 
 pygame.init()
-# creates a fullscreen window after checking the display size
+# creates a fullscreen window after checking the display size, source: stackoverflow/stackexchange
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
 if sys.platform == "win32": #for windows systems
     HWND = pygame.display.get_wm_info()['window']
@@ -65,7 +60,7 @@ rays = []
 running = True
 
 def path_fiddler(dir:list): # this function takes the current working directory of the file and adds the specified directory to it, 
-    temp = ""               # then modifies the resulting string to double any slashes or backslashes, so that opencv actually works
+    temp = ""               # then modifies the resulting string to double any slashes or backslashes, so that string interpretation is correct
     result = ""               
     for element in dir:
         temp = os.path.join(temp, element)
@@ -76,22 +71,22 @@ def path_fiddler(dir:list): # this function takes the current working directory 
     return result
 
 
-def cv2_img_detect(dir):
+def cv2_img_detect(dir): # source: geeksforgeeks
     img = cv2.imread(path_fiddler(dir), cv2.IMREAD_GRAYSCALE)
+    # read the image data to memory, and convert to grayscale
 
-    # Reading same image in another 
-    # variable and converting to gray scale.
-    # Converting image to a binary image
-    # ( black and white only image).
     _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    # idk what this does, check
+    # underscore means ignore the variable
     
     # Detecting contours in image.
     contours, _= cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+
     # Going through every contours found in the image.
     for cnt in contours :
         approx = cv2.approxPolyDP(cnt, wallVar, True)  # 0.009 * cv2.arcLength(cnt, True)
     
-        # Used to flatted the array containing
+        # Used to flatten (reduce to one dimension) the array containing
         # the co-ordinates of the vertices.
         n = approx.ravel() 
     return n
@@ -100,8 +95,8 @@ def cv2_img_detect(dir):
 
   
 class Ray:
-    def __init__(self, reflections, vector, origin):
-        self.reflections = reflections
+    def __init__(self, reflections, vector, origin): # initialize variables for the rays. first 3 vars are what define the ray
+        self.reflections = reflections               # the 4th and 5th are for other purpouses
         self.vector = vector
         self.origin = origin
         self.deleted = False
@@ -128,12 +123,13 @@ class Ray:
             y = y1 + t * (y2 - y1)
             collidePos = pygame.math.Vector2(x, y)
             return collidePos
+        
     def delete(self):
         if self.deleted:
             self.kill()
             del self
 
-class Mirror:
+class Mirror: 
     def __init__(self, start_pos, end_pos, color = "white"):
         self.start_pos = start_pos
         self.end_pos = end_pos
@@ -173,15 +169,15 @@ def drawRays(rays, mirrors, color = (200, 200, 20)):
     for ray in rays:
         ray.delete()
 
-def generateMirrors(n):
+def generateMirrors(n): # generates all the mirror objects, 
     mirrors.clear()
     mirrors.append(Mirror((0, 0), (screenx, 0)))
     mirrors.append(Mirror((0, 0), (0, screeny)))
     mirrors.append(Mirror((screenx, 0), (screenx, screeny)))
     mirrors.append(Mirror((0, screeny), (screenx, screeny)))
-    i = 0
     mirrors.append(Mirror((n[-2], n[-1]), (n[0], n[1])))
     mirrors.append(Mirror((n[-4], n[-3]), (n[-2], n[-1])))
+    i = 0
     for j in n:
         if(i % 2 == 0) and len(n) - 4 >= i:
             if n[i] == n[-4]:
@@ -192,7 +188,7 @@ def generateMirrors(n):
 
 
 
-def draw():
+def draw(): # each call of this function also calls the DrawRays function, the one that uses a lot of cycling and nesting
     display.fill((10, 10, 10))
     rays.clear()
     for i in range(0, NUM_RAYS):
@@ -210,15 +206,13 @@ def draw():
     pygame.display.update()
 generateMirrors(cv2_img_detect(DIR))
 
-while running:
+while running: # main loop, one cycle per frame, handles IO and rendering
     mx, my = pygame.mouse.get_pos()
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
-
         elif event.type == pygame.VIDEORESIZE:
              screen = pygame.display.set_mode(event.size, pygame.RESIZABLE | pygame.HWSURFACE)
-
         elif event.type == pygame.MOUSEBUTTONUP:
             pass
             
