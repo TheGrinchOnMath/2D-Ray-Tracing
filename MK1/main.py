@@ -54,8 +54,8 @@ else:
     screenx, screeny = screen.get_size()
     pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
 
-wallVar = 3
-DIR = ["assets", "image.png"]
+wallVar = 1
+DIR = ["assets", "Penrose_unilluminable_room.png"]
 NUM_RAYS = 50
 WINDOW_SIZE = (screenx, screeny)
 MAX_REFLECTIONS = 50
@@ -76,14 +76,14 @@ def path_fiddler(dir:list): # this function takes the current working directory 
     return result
 
 
-def cv2_img_detect(dir):
+def cv2_img_detect(dir, screenx, screeny):
     img = cv2.imread(path_fiddler(dir), cv2.IMREAD_GRAYSCALE)
-
+    resize = cv2.resize(img, (screenx, screeny))
     # Reading same image in another 
     # variable and converting to gray scale.
     # Converting image to a binary image
     # ( black and white only image).
-    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    _, threshold = cv2.threshold(resize, 110, 255, cv2.THRESH_BINARY)
     
     # Detecting contours in image.
     contours, _= cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
@@ -208,7 +208,7 @@ def draw():
     screen.blit(display, (0, 0))
 
     pygame.display.update()
-generateMirrors(cv2_img_detect(DIR))
+generateMirrors(cv2_img_detect(DIR, screenx, screeny))
 
 while running:
     mx, my = pygame.mouse.get_pos()
