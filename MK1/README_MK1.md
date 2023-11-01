@@ -134,3 +134,6 @@ links consulted:
 
    https://numpy.org/doc/stable
    Numpy documentation (last consulted on the 29.9.2023)
+   
+   https://math.stackexchange.com/questions/13261/how-to-get-a-reflection-vector
+   vector reflection equation
