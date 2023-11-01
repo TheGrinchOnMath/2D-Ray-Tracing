@@ -34,20 +34,9 @@ from pygame.math import *
 pygame.init()
 # creates a fullscreen window after checking the display size, source: stackoverflow/stackexchange
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
-if sys.platform == "win32": #for windows systems
-    HWND = pygame.display.get_wm_info()['window']
-    SW_MAXIMIZE = 3
-    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
-    screenx, screeny = screen.get_size()
-elif sys.platform == "linux":
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
-# pygame.RESIZABLE makes the window resizable
-else:
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+screen = pygame.display.set_mode()
+screenx, screeny = screen.get_size()
+pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE | pygame.FULLSCREEN)
 
 wallVar = 1
 DIR = ["assets", "Penrose_unilluminable_room.png"]
@@ -157,11 +146,11 @@ def drawRays(rays, mirrors, color = (200, 200, 20)):
                     ray_dist_x, ray_dist_y = ray.origin[0] - intersect_point[0], ray.origin[1] - intersect_point[1]
                     distance = math.sqrt(ray_dist_x ** 2 + ray_dist_y ** 2)
                     if distance < closest:
-                        mirror_vector = pygame.Vector2(mirror.slope_x, mirror.slope_y)
-                        normal_vector = pygame.Vector2(-(mirror_vector[1]), mirror_vector[0])
                         closest = distance
                         closest_point = intersect_point
             if closest_point is not None:
+                mirror_vector = pygame.Vector2(mirror.slope_x, mirror.slope_y)
+                normal_vector = pygame.Vector2(-(mirror_vector[1]), mirror_vector[0])
                 ray_vector = ray.vector
                 new_vector = ray_vector.reflect(normal_vector)
                 if ray.origin != closest_point and ray.reflections < MAX_REFLECTIONS:
@@ -212,6 +201,9 @@ while running: # main loop, one cycle per frame, handles IO and rendering
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
+        elif event.type ==pygame.KEYDOWN:
+            if (event.key == pygame.K_LALT or pygame.K_RALT) and event.key == pygame.K_F4:
+                running = False
         elif event.type == pygame.VIDEORESIZE:
              screen = pygame.display.set_mode(event.size, pygame.RESIZABLE | pygame.HWSURFACE)
         elif event.type == pygame.MOUSEBUTTONUP:
