@@ -34,26 +34,15 @@ from pygame.math import *
 pygame.init()
 # creates a fullscreen window after checking the display size, source: stackoverflow/stackexchange
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
-if sys.platform == "win32": #for windows systems
-    HWND = pygame.display.get_wm_info()['window']
-    SW_MAXIMIZE = 3
-    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
-    screenx, screeny = screen.get_size()
-elif sys.platform == "linux":
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
-# pygame.RESIZABLE makes the window resizable
-else:
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+screen = pygame.display.set_mode()
+screenx, screeny = screen.get_size()
+pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE | pygame.FULLSCREEN)
 
 wallVar = 1
 DIR = ["assets", "Penrose_unilluminable_room.png"]
-NUM_RAYS = 1000
+NUM_RAYS = 1
 WINDOW_SIZE = (screenx, screeny)
-MAX_REFLECTIONS = 100
+MAX_REFLECTIONS = 2
 display = pygame.Surface(WINDOW_SIZE)
 mirrors = []
 rays = []
@@ -157,10 +146,10 @@ def drawRays(rays, mirrors, color = (200, 200, 20)):
                     ray_dist_x, ray_dist_y = ray.origin[0] - intersect_point[0], ray.origin[1] - intersect_point[1]
                     distance = math.sqrt(ray_dist_x ** 2 + ray_dist_y ** 2)
                     if distance < closest:
-                        mirror_vector = pygame.Vector2(mirror.slope_x, mirror.slope_y)
-                        normal_vector = pygame.Vector2(-(mirror_vector[1]), mirror_vector[0])
                         closest = distance
                         closest_point = intersect_point
+                        mirror_vector = pygame.Vector2(mirror.slope_x, mirror.slope_y)
+                        normal_vector = pygame.Vector2(-(mirror_vector[1]), mirror_vector[0])
             if closest_point is not None:
                 ray_vector = ray.vector
                 new_vector = ray_vector.reflect(normal_vector)
@@ -192,11 +181,14 @@ def generateMirrors(n): # generates all the mirror objects,
 def draw(): # each call of this function also calls the DrawRays function, the one that uses a lot of cycling and nesting
     display.fill((10, 10, 10))
     rays.clear()
+    """
     for i in range(0, NUM_RAYS):
         angle = 2 * math.pi * (i / NUM_RAYS)
         ray_vector = pygame.Vector2(math.cos(angle), math.sin(angle))
         rays.append(Ray(0, ray_vector, (mx, my)))
-
+""" 
+    vector = pygame.Vector2(-1, -1)
+    rays.append(Ray(0, vector, (mx, my)))
     for mirror in mirrors:
         mirror.draw()
 
@@ -212,6 +204,9 @@ while running: # main loop, one cycle per frame, handles IO and rendering
     for event in pygame.event.get():
         if event.type == QUIT:
             running = False
+        elif event.type ==pygame.KEYDOWN:
+            if (event.key == pygame.K_LALT or pygame.K_RALT) and event.key == pygame.K_F4:
+                running = False
         elif event.type == pygame.VIDEORESIZE:
              screen = pygame.display.set_mode(event.size, pygame.RESIZABLE | pygame.HWSURFACE)
         elif event.type == pygame.MOUSEBUTTONUP:
