@@ -25,8 +25,7 @@
 #===============#
 
 #===IMPORTS===#
-import math, ctypes, sys, cv2, os, pygame
-from ctypes.wintypes import *
+import math, sys, cv2, os, pygame
 from pygame.locals import *
 from pygame.math import *
 #=============#
@@ -42,10 +41,13 @@ change the variables in the DIR variable to the folders that lead to the image, 
 
 NUM_RAYS is the number of rays that leave the mouse position
 MAX_REFLECTIONS is the maximum number of reflections
+WARNING: setting NUM_RAYS * MAX_REFLECTIONS above 100'000 can make the code run very slowly, and if the parameters are too high,
+the code will produce nothing.
+this does, however, depend on the CPU of the computer running the code.
 """
 
-DIR = ["assets", "Penrose_unilluminable_room.png"]
-NUM_RAYS = 1000
+DIR = ["assets", "Tokarsky_unilluminable_room.png"]
+NUM_RAYS = 750
 MAX_REFLECTIONS = 250
 
 #======DO=NOT=CHANGE======#
