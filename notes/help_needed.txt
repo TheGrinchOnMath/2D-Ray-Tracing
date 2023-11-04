@@ -1,2 +1,0 @@
-line-ellipse intersection formula
-ellipse tangent formula

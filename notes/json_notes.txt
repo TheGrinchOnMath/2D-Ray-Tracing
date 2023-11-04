@@ -1,1 +1,0 @@
-json is a lossy type of storage, as in the tuple and list datatype from python correspond to an array datatype in json notation
