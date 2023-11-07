@@ -1,5 +1,6 @@
-import pygame, os, cv2, sys, ctypes
+import pygame, os, cv2, sys, ctypes, random
 from experiments.lib import *
+import numpy as np
 
 pygame.init()
 
@@ -49,41 +50,78 @@ def json_reader():
     # the wall data
     pass
 
+def physics_calculator(input, mirrors): #input is structured as follows: [originx, originy, vectorx, vectory]
+    pos = pygame.Vector2(input[0], input[1])
+    vect = pygame.Vector2(input[2], input[3])
+    mark = 1000000
+    cpos = None
+    for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
+        pos = mirror.intersect(pos, vect)
+        if pos is not None:
+            cpos = pos
+            dist = pos - pos # start is the origin of the ray at position n of the array (arrays start at 0, mind)
+            if dist < mark:
+                mark = dist
+                id = mirror.id
+                vect = None # vect is the directional vector of the incident ray that is being calculated
+    for mirror in mirrors: # get the right mirror and use its data to determine the reflection
+        if mirror.id == id:
+            if mirror.type == "Ellipse" or mirror.type == "Arc":
+                normal = mirror.find_normal(cpos)
+            elif mirror.type == "Line":
+                normal = mirror.normal
+            nvect = pygame.Vector2.reflect(vect, normal)
+        continue
+    ray_out = [cpos, nvect]
+    pos_out = [pos, cpos]
+
+    return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
+
+class Mirror:
+    def __init__(self, type, startpos, endpos): # add data for calculations with ellipse and arc
+        self.type = type
+        self.startpos = startpos
+        self.endpos = endpos
+        self.id = random.randint(1, 1000)
+
+    def intersect(self, pos, vector):
+        if self.type == "Line":
+            x1, y1 = self.startpos
+            x2, y2 = self.endpos
+            x3, y3 = pos
+            x4, y4 = pos + vector
+
+            denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
+            numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+            if denominator == 0:
+                return None
+            u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
+            t = numerator / denominator
+            if 1 > t > 0 and u > 0:
+                x = x1 + t * (x2 - x1)
+                y = y1 + t * (y2 - y1)
+                collidePos = pygame.math.Vector2(x, y)
+                return collidePos
+            
+        if self.type == "Arc":
+            # add the math for the line-arc intersection equation
+            pass
+        
+        if self.type == "Ellipse":
+            # add the path for the line-ellipse intersection equation
+            pass
+                    
+    def draw(self, color):
+        if self.type == "Line":
+            pygame.draw.line(display, color, self.start_pos, self.end_pos, 3)
+        if self.type == "Ellipse":
+            
 
 display = pygame.Surface((screenx, screeny))
 
 running = True
 
-class Line:
-    def __init__(self, startpos, endpos):
-        self.startpos = startpos
-        self.endpos = endpos
-        self.vector = pygame.Vector2((startpos[1] + endpos[0] - startpos[0] - endpos[1]), (startpos[1] + endpos[0] - startpos[0] - endpos[1]))
-        self.type = "line"
 
-class Ellipse:
-    def __init__(self, startpos, endpos, focusA, focusB, eccentricity):
-        self.startpos = startpos
-        self.endpos = endpos
-        self.focusA = focusA
-        self.focusB = focusB
-        self.eccentricity = eccentricity
-        self.type = "ellipse"
-
-    def normal(self, pos):
-
-        # add some code here that calculates the vector perpendicular
-        # to the tangent to the point of reflection
-        
-        pass
-
-class Circle:
-    def __init__(self, startpos, endpos, center, radius):
-        self.startpos = startpos
-        self.endpos = endpos
-        self.center = center
-        self.radius = radius
-        self.type = "circle"
 
 def collision(wall):
     # do line-line intersection here (therefore only ellipse and circle operations are needed in addition)
@@ -108,4 +146,4 @@ def main():
                 refresh = True
                 mx, my = pygame.mouse.get_pos()
                 mousepos = (mx, my)
-        render(refresh, mousepos)
+        

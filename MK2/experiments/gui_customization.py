@@ -2,27 +2,16 @@ import pygame, os, sys, ctypes
 
 pygame.init()
 
-screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
-if sys.platform == "win32": #for windows systems
-    HWND = pygame.display.get_wm_info()['window']
-    SW_MAXIMIZE = 3
-    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
-    screenx, screeny = screen.get_size()
-elif sys.platform == "linux":
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
-# pygame.RESIZABLE makes the window resizable
-else:
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+screen = pygame.display.set_mode()
+screenx, screeny = screen.get_size()
+pygame.display.set_mode((screenx, screeny), pygame.FULLSCREEN | pygame.HWSURFACE)
 
-
-
-def path_fiddler(dir):
+def path_fiddler(dir:list):
+    temp = os.getcwd
+    for n in dir:
+        temp = os.path.join(temp, dir)
     result = ""
-    for element in (os.path.join(os.getcwd(), dir)):
+    for element in (temp):
         if element == "\\" or element == "/":
             result += element
         result += element
@@ -38,6 +27,11 @@ running = True
 
 # add a function that handles the actual shape creation and manipulation, with tools such as rotate (needs work to find equations for ellipses that have been twisted), move around, 
 # some way of snapping to points and lines, some way of showing when stuff is aligned, and more stuff i have not yet thought of.
+
+class Mirror:
+    def __init__(self, type, start, end, ):
+    
+
 
 
 def main():
