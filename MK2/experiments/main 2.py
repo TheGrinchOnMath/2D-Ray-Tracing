@@ -1,4 +1,4 @@
-import pygame, os, cv2, sys, ctypes, random
+import pygame, os, cv2, sys, ctypes, random, math
 from experiments.lib import *
 import numpy as np
 
@@ -53,13 +53,15 @@ def json_reader():
 def physics_calculator(input, mirrors): #input is structured as follows: [originx, originy, vectorx, vectory]
     pos = pygame.Vector2(input[0], input[1])
     vect = pygame.Vector2(input[2], input[3])
+    slope = input[3] / input[2]
+    heightAtOrigin = 
     mark = 1000000
     cpos = None
     for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
-        pos = mirror.intersect(pos, vect)
-        if pos is not None:
-            cpos = pos
-            dist = pos - pos # start is the origin of the ray at position n of the array (arrays start at 0, mind)
+        collision = mirror.intersect(pos, vect, slope, heightAtOrigin)
+        if collision is not None:
+            cpos = collision
+            dist = collision - pos # start is the origin of the ray at position n of the array (arrays start at 0, mind)
             if dist < mark:
                 mark = dist
                 id = mirror.id
@@ -76,6 +78,30 @@ def physics_calculator(input, mirrors): #input is structured as follows: [origin
     pos_out = [pos, cpos]
 
     return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
+
+class Ellipse:
+    def __init__(self, startpos, endpos, offset_x, offset_y, width, height):
+        self.startpos = startpos
+        self.endpos = endpos
+        self.a_squared = pow(offset_x, 2)
+        self.b_squared = pow(offset_y, 2)
+        self.ab = offset_x * offset_y
+        self.height_squared = pow(height, 2)
+        self.width_squared = pow(width, 2)
+
+    def intersect(self, rayPos, rayVector, slope, heightAtOrigin):
+        delta = self.a_squared * pow(slope, 2) + self.b_squared - pow((self.offset_x * slope + (heightAtOrigin - self.offset_y)), 2)
+        if delta <= 0:
+            pos = None
+        if delta > 0:
+            posx_1 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) + math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
+            posx_2 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) - math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
+            posy_1 = slope * posx_1 + heightAtOrigin
+            posy_2 = slope * posx_2 + heightAtOrigin
+        # insert condition to check if collision is supposed to happen and which intersection is the correct one
+        return pos # pygame.Vector2
+
+        
 
 class Mirror:
     def __init__(self, type, startpos, endpos): # add data for calculations with ellipse and arc
@@ -115,6 +141,7 @@ class Mirror:
         if self.type == "Line":
             pygame.draw.line(display, color, self.start_pos, self.end_pos, 3)
         if self.type == "Ellipse":
+            pass
             
 
 display = pygame.Surface((screenx, screeny))
