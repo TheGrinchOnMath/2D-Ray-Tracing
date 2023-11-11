@@ -51,10 +51,11 @@ def json_reader():
     pass
 
 def physics_calculator(input, mirrors): #input is structured as follows: [originx, originy, vectorx, vectory]
+    # consider storing the line equation for the rays in addition to what we already have, cuz i use both line equation parameters and vectors...
     pos = pygame.Vector2(input[0], input[1])
     vect = pygame.Vector2(input[2], input[3])
     slope = input[3] / input[2]
-    heightAtOrigin = 
+    heightAtOrigin = None # add formula for finding this based on the inputs
     mark = 1000000
     cpos = None
     for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
@@ -89,7 +90,7 @@ class Ellipse:
         self.height_squared = pow(height, 2)
         self.width_squared = pow(width, 2)
 
-    def intersect(self, rayPos, rayVector, slope, heightAtOrigin):
+    def intersect(self, rayPos, rayVector, slope, heightAtOrigin): # take a list containing position, vector and line equation parameters
         delta = self.a_squared * pow(slope, 2) + self.b_squared - pow((self.offset_x * slope + (heightAtOrigin - self.offset_y)), 2)
         if delta <= 0:
             pos = None
@@ -99,12 +100,14 @@ class Ellipse:
             posy_1 = slope * posx_1 + heightAtOrigin
             posy_2 = slope * posx_2 + heightAtOrigin
         # insert condition to check if collision is supposed to happen and which intersection is the correct one
+        # equation of tangent normal vector to an ellipse at a given point is the bisector of AP and BP 
+        # this is big as it is not hard to do, given the formula for the bisector having been reworked.
         return pos # pygame.Vector2
 
         
 
 class Mirror:
-    def __init__(self, type, startpos, endpos): # add data for calculations with ellipse and arc
+    def __init__(self, type, startpos, endpos): # add data for calculations with ellipse and arc, investigate *args and **kwargs
         self.type = type
         self.startpos = startpos
         self.endpos = endpos
