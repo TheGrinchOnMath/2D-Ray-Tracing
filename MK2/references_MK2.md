@@ -146,3 +146,6 @@ links consulted:
 
    https://www.xarg.org/book/linear-algebra/bisector-of-two-vectors/
    how to get bisector of two vectors, used to find the normal vector of the ellipse tangent at the intersection point
+
+   https://www.desmos.com/calculator/royt2khrcr
+   how to get the tangent to a point on an ellipse, visualized in Desmos calculator

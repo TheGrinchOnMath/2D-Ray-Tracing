@@ -1,4 +1,4 @@
-import pygame, os, cv2, sys, ctypes, random, math
+import pygame, os, cv2, sys, ctypes, random, math, multiprocessing
 from experiments.lib import *
 import numpy as np
 
@@ -93,8 +93,7 @@ class Mirror:
                     self.offset = value # offset from origin
                 if key == "dimensions":
                     self.dimensions = value # (width, height) the values of a and b
-                else:
-                    raise TypeError("Wrong arguments given")
+                    
             
         self.a_squared = pow(self.offset[0], 2)
         self.b_squared = pow(self.offset[1], 2)
@@ -103,11 +102,16 @@ class Mirror:
         self.width_squared = pow(self.dimensions[0], 2)
         self.focusA = None
         self.focusB = None   # add calculations here
+
         if type == "Arc":
-            pass
+            for key, value in kwargs.items():
+                if key == "radius":
+                    self.radius = value
+                if key == "center":
+                    self.center = value
 
     def intersect(self, rayOrigin, rayVector, slope, heightAtOrigin):
-
+        intersect = None
         if self.type == "Line":
             x1, y1 = self.startpos
             x2, y2 = self.endpos
@@ -127,7 +131,6 @@ class Mirror:
                 return collidePos
             
         if self.type == "Ellipse":
-            intersect = None
             condition = False # add the bit that checks if there is supposed to be an intersection at all, and which intersection to regard as being the case
             if condition is True:    
                 delta = self.a_squared * pow(slope, 2) + self.b_squared - pow((self.offset_x * slope + (heightAtOrigin - self.offset_y)), 2)
@@ -139,8 +142,20 @@ class Mirror:
                     posy_2 = slope * posx_2 + heightAtOrigin
 
             # insert condition to check if collision is supposed to happen and which intersection is the correct one
+            # a temporary plug could be to set the intersections to be above or below a x or y coordinate
             return intersect # pygame.Vector2
     
+        if self.type == "Arc":
+            delta = pow(self.radius, 2) * (pow(slope, 2) + 1) - pow((2 * slope * self.offset[0] + heightAtOrigin - self.offset[1]), 2)
+            if delta > 0:
+                posx_1 = (self.offset[0] - (slope*(heightAtOrigin - self.offset[1])) + math.sqrt(delta)) / (pow(slope, 2) + 1)
+                posx_2 = (self.offset[0] - (slope*(heightAtOrigin - self.offset[1])) - math.sqrt(delta)) / (pow(slope, 2) + 1)
+                
+                posy_1 = slope * posx_1 + heightAtOrigin
+                posy_2 = slope * posx_2 + heightAtOrigin
+
+            return intersect
+
     def normalVector(self, intersection):
         if self.type == "Line":
             normal = self.normal
@@ -182,3 +197,7 @@ def main():
                 mx, my = pygame.mouse.get_pos()
                 mousepos = (mx, my)
         
+
+def multiProcessor():
+    pass # this function is to contain code that takes the ray data workload and distributes it on X processes
+         # then returns the calculated datasets
