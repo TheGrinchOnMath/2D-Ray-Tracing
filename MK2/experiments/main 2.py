@@ -57,68 +57,62 @@ def physics_calculator(input, mirrors): #input is structured as follows: [origin
     slope = input[3] / input[2]
     heightAtOrigin = None # add formula for finding this based on the inputs
     mark = 1000000
-    cpos = None
+    collisionPos = None
     for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
         collision = mirror.intersect(pos, vect, slope, heightAtOrigin)
         if collision is not None:
-            cpos = collision
-            dist = collision - pos # start is the origin of the ray at position n of the array (arrays start at 0, mind)
+            collisionPos = collision
+            dist = math.sqrt(pow((collision[0] - pos[0]), 2) + pow((collision[1] - pos[1]), 2)) # start is the origin of the ray at position n of the array (arrays start at 0, mind)
             if dist < mark:
                 mark = dist
-                id = mirror.id
+                mirrorId = id(mirror)
                 vect = None # vect is the directional vector of the incident ray that is being calculated
     for mirror in mirrors: # get the right mirror and use its data to determine the reflection
-        if mirror.id == id:
-            if mirror.type == "Ellipse" or mirror.type == "Arc":
-                normal = mirror.find_normal(cpos)
-            elif mirror.type == "Line":
-                normal = mirror.normal
-            nvect = pygame.Vector2.reflect(vect, normal)
+        if id(mirror) == mirrorId:
+            normal = mirror.normalVector(collisionPos)
+            rVect = pygame.Vector2.reflect(vect, normal)
         continue
-    ray_out = [cpos, nvect]
-    pos_out = [pos, cpos]
+    ray_out = [collisionPos, rVect]
+    pos_out = [pos, collisionPos]
 
     return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
 
-class Ellipse:
-    def __init__(self, startpos, endpos, offset_x, offset_y, width, height):
-        self.startpos = startpos
-        self.endpos = endpos
-        self.a_squared = pow(offset_x, 2)
-        self.b_squared = pow(offset_y, 2)
-        self.ab = offset_x * offset_y
-        self.height_squared = pow(height, 2)
-        self.width_squared = pow(width, 2)
-
-    def intersect(self, rayPos, rayVector, slope, heightAtOrigin): # take a list containing position, vector and line equation parameters
-        delta = self.a_squared * pow(slope, 2) + self.b_squared - pow((self.offset_x * slope + (heightAtOrigin - self.offset_y)), 2)
-        if delta <= 0:
-            pos = None
-        if delta > 0:
-            posx_1 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) + math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
-            posx_2 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) - math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
-            posy_1 = slope * posx_1 + heightAtOrigin
-            posy_2 = slope * posx_2 + heightAtOrigin
-        # insert condition to check if collision is supposed to happen and which intersection is the correct one
-        # equation of tangent normal vector to an ellipse at a given point is the bisector of AP and BP 
-        # this is big as it is not hard to do, given the formula for the bisector having been reworked.
-        return pos # pygame.Vector2
-
-        
 
 class Mirror:
-    def __init__(self, type, startpos, endpos): # add data for calculations with ellipse and arc, investigate *args and **kwargs
+    def __init__(self, type, startpos, endpos, **kwargs): # add data for calculations with ellipse and arc, investigate *args and **kwargs
         self.type = type
-        self.startpos = startpos
-        self.endpos = endpos
-        self.id = random.randint(1, 1000)
+        self.startpos = pygame.Vector2(startpos)
+        self.endpos = pygame.Vector2(endpos)
+        
+        if type == "Line":
+            self.normal = pygame.Vector2((endpos[1] - startpos[1]), (startpos[0] - endpos[0]))
 
-    def intersect(self, pos, vector):
+        if type == "Ellipse":
+            for key, value in kwargs.items():
+                if key == "offset":
+                    self.offset = value # offset from origin
+                if key == "dimensions":
+                    self.dimensions = value # (width, height) the values of a and b
+                else:
+                    raise TypeError("Wrong arguments given")
+            
+        self.a_squared = pow(self.offset[0], 2)
+        self.b_squared = pow(self.offset[1], 2)
+        self.ab = self.offset[0] * self.offset[1]
+        self.height_squared = pow(self.dimensions[1], 2)
+        self.width_squared = pow(self.dimensions[0], 2)
+        self.focusA = None
+        self.focusB = None   # add calculations here
+        if type == "Arc":
+            pass
+
+    def intersect(self, rayOrigin, rayVector, slope, heightAtOrigin):
+
         if self.type == "Line":
             x1, y1 = self.startpos
             x2, y2 = self.endpos
-            x3, y3 = pos
-            x4, y4 = pos + vector
+            x3, y3 = rayOrigin
+            x4, y4 = rayOrigin + rayVector
 
             denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
             numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
@@ -132,18 +126,42 @@ class Mirror:
                 collidePos = pygame.math.Vector2(x, y)
                 return collidePos
             
-        if self.type == "Arc":
-            # add the math for the line-arc intersection equation
-            pass
-        
         if self.type == "Ellipse":
-            # add the path for the line-ellipse intersection equation
-            pass
+            intersect = None
+            condition = False # add the bit that checks if there is supposed to be an intersection at all, and which intersection to regard as being the case
+            if condition is True:    
+                delta = self.a_squared * pow(slope, 2) + self.b_squared - pow((self.offset_x * slope + (heightAtOrigin - self.offset_y)), 2)
+                if delta > 0:
+                    posx_1 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) + math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
+                    posx_2 = (self.b_squared * self.offset_x - self.a_squared * slope * (heightAtOrigin - self.offset_y) - math.sqrt(delta) / self.a_squared* pow(slope, 2) + self.b_squared)
+                    # this calculates the x coordinate of the intersection between the ray and the ellipse
+                    posy_1 = slope * posx_1 + heightAtOrigin
+                    posy_2 = slope * posx_2 + heightAtOrigin
+
+            # insert condition to check if collision is supposed to happen and which intersection is the correct one
+            return intersect # pygame.Vector2
+    
+    def normalVector(self, intersection):
+        if self.type == "Line":
+            normal = self.normal
+
+        if self.type == "Ellipse":
+            AP = pygame.Vector2(intersection - self.focusA)
+            BP = pygame.Vector2(intersection - self.focusB)
+            normal = pygame.Vector2.normalize(AP * AP.magnitude() + BP * BP.magnitude())
+        
+        if self.type == "Arc":
+            pass # add the bit that does the arc normal vector calculation here, it is -CP where C is center and P is intersection
+
+        return normal
+            
                     
-    def draw(self, color):
+    def draw(self, color): # this needs work. the line is easy, but the ellipses might be a little harder. need to rethink the structure of this one
         if self.type == "Line":
             pygame.draw.line(display, color, self.start_pos, self.end_pos, 3)
         if self.type == "Ellipse":
+            pass
+        if self.type == "Arc":
             pass
             
 
@@ -151,19 +169,6 @@ display = pygame.Surface((screenx, screeny))
 
 running = True
 
-
-
-def collision(wall):
-    # do line-line intersection here (therefore only ellipse and circle operations are needed in addition)
-    if wall.type == "ellipse":      # add a logical operation to check if the ray goes through the real bit of the ellipse
-        pass
-    elif wall.type == "circle":
-        # same for the circle
-
-        pass
-    # this function calculates intersections between the different equations
-    # such as lines, ellipses and circles
-    pass
 
 def main():
     while running:
