@@ -1,6 +1,7 @@
 import pygame, os, cv2, sys, ctypes, random, math, multiprocessing
-from experiments.lib import *
+from lib import *
 import numpy as np
+import concurrent.futures
 
 pygame.init()
 
@@ -196,8 +197,23 @@ def main():
                 refresh = True
                 mx, my = pygame.mouse.get_pos()
                 mousepos = (mx, my)
-        
+  
 
 def multiProcessor():
-    pass # this function is to contain code that takes the ray data workload and distributes it on X processes
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        result = executor.map(printList, arr)
+        # add code that unwraps the numpy array here
+        print(result)
+
+     # this function is to contain code that takes the ray data workload and distributes it on X processes
          # then returns the calculated datasets
+         # would inputting the array with the ray data work?
+         # it may be necessary to use the old structure to test the current code
+         # i also need to work on the gui, to be able to design shapes with ease
+arr = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+def printList(list):
+    return list
+
+if __name__ == "__main__":
+    print(multiProcessor())
