@@ -10,7 +10,8 @@ screen = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
 screenx, screeny = screen.get_size()
 
 
-mirrors = []    
+mirrors = []  
+cpuCoreCount = 4  
 RAYS = 500 # <-- this variable sets the amount of rays initially emitted from the cursor's position
 REFLECT_CTR = 0 # <-- this variable keeps track of how many reflections have been calculated 
                 #     (could be used to stop the physics after a set number of reflections)
@@ -41,7 +42,7 @@ def json_reader():
     # the wall data
     pass
 
-def physics_calculator(input, mirrors): #input is structured as follows: [originx, originy, vectorx, vectory]
+def physics_calculator(input): #input is structured as follows: [originx, originy, vectorx, vectory]
     # consider storing the line equation for the rays in addition to what we already have, cuz i use both line equation parameters and vectors...
     pos = pygame.Vector2(input[0], input[1])
     vect = pygame.Vector2(input[2], input[3])
@@ -211,6 +212,10 @@ display = pygame.Surface((screenx, screeny))
 
 generateMirrors("Image", ["MK2", "files", "assets", "penrose_unilluminable_room.png"])
 
+def render():
+
+    pass
+
 
 def main():
     running = True
@@ -231,9 +236,10 @@ def main():
             currentCursorPos = mousepos
             newArray = initRays(currentCursorPos, RAYS)
 
-        with concurrent.futures.ProcessPoolExecutor() as executor:
+        with concurrent.futures.ProcessPoolExecutor(max_workers=cpuCoreCount) as executor:
             result = executor.map(physics_calculator, newArray)
-            print(result)
+            for r in next(result):
+                print(result)
         for mirror in mirrors:
             mirror.draw()
         
