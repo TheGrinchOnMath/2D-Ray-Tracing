@@ -50,6 +50,7 @@ def physics_calculator(input): #input is structured as follows: [originx, origin
     heightAtOrigin = None # add formula for finding this based on the inputs
     mark = 1000000
     collisionPos = None
+    ray_out, pos_out = None
     for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
         collision = mirror.intersect(pos, vect, slope, heightAtOrigin)
         if collision is not None:
@@ -63,9 +64,10 @@ def physics_calculator(input): #input is structured as follows: [originx, origin
         if id(mirror) == mirrorId:
             normal = mirror.normalVector(collisionPos)
             rVect = pygame.Vector2.reflect(vect, normal)
+            ray_out = [collisionPos, rVect]
+            pos_out = [pos, collisionPos]
+
         continue
-    ray_out = [collisionPos, rVect]
-    pos_out = [pos, collisionPos]
 
     return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
 
@@ -213,7 +215,7 @@ display = pygame.Surface((screenx, screeny))
 generateMirrors("Image", ["MK2", "files", "assets", "penrose_unilluminable_room.png"])
 
 def render():
-
+    pygame.display.update()
     pass
 
 
@@ -239,7 +241,7 @@ def main():
         with concurrent.futures.ProcessPoolExecutor(max_workers=cpuCoreCount) as executor:
             result = executor.map(physics_calculator, newArray)
             for r in next(result):
-                print(result)
+                print(r)
         for mirror in mirrors:
             mirror.draw()
         
