@@ -6,43 +6,33 @@ import concurrent.futures
 pygame.init()
 
 
-screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE | pygame.HWSURFACE)
-if sys.platform == "win32": #for windows systems
-    HWND = pygame.display.get_wm_info()['window']
-    SW_MAXIMIZE = 3
-    ctypes.windll.user32.ShowWindow(HWND, SW_MAXIMIZE)
-    screenx, screeny = screen.get_size()
-elif sys.platform == "linux":
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
-# pygame.RESIZABLE makes the window resizable
-else:
-    screen = pygame.display.set_mode()
-    screenx, screeny = screen.get_size()
-    pygame.display.set_mode((screenx, screeny), pygame.RESIZABLE | pygame.HWSURFACE)
+screen = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
+screenx, screeny = screen.get_size()
 
 
-    
+mirrors = []    
 RAYS = 500 # <-- this variable sets the amount of rays initially emitted from the cursor's position
 REFLECT_CTR = 0 # <-- this variable keeps track of how many reflections have been calculated 
                 #     (could be used to stop the physics after a set number of reflections)
 
-def path_fiddler(dir):
-    result = ""
-    for n in (os.path.join(os.getcwd(), dir)):
-        if n == ("\\" or "//"):
+def path_fiddler(dir:list): # this function takes the current working directory of the file and adds the specified folders and file to it, 
+    temp = ""               # then modifies the resulting string to double any slashes or backslashes, so that string interpretation is correct
+    result = ""               
+    for element in dir:
+        temp = os.path.join(temp, element)
+    for n in (os.path.join(os.getcwd(), temp)):
+        if n == ("\\" or "/"):
             result += n
         result += n
     return result
 
-def opencv_image_interpreter():
-    dir = path_fiddler(os.path.join("assets", "image.png"))
-    img = cv2.imread(dir, cv2.IMREAD_GRAYSCALE)
-    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+def opencv_image_interpreter(path):
+    img = cv2.imread(path, cv2.IMREAD_GRAYSCALE)
+    resize = cv2.resize(img, (screenx, screeny))
+    _, threshold = cv2.threshold(resize, 110, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        approx = cv2.approxPolyDP(cnt, 3, True)
+        approx = cv2.approxPolyDP(cnt, 1, True)
         n = approx.ravel()
     return n
 
@@ -78,6 +68,29 @@ def physics_calculator(input, mirrors): #input is structured as follows: [origin
 
     return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
 
+def generateMirrors(fileType, filePath): # could be improved to check for extensions and act accordingly
+    mirrors = []
+    path = path_fiddler(filePath)
+    
+    mirrors.append(Mirror("Line", (0, 0), (screenx, 0)))
+    mirrors.append(Mirror("Line", (0, 0), (0, screeny)))
+    mirrors.append(Mirror("Line", (screenx, 0), (screenx, screeny)))
+    mirrors.append(Mirror("Line", (0, screeny), (screenx, screeny)))
+
+    if fileType == "JSON":
+        pass # this is not implemented yet, this should call a function that takes a json file and creates the mirrors based on that
+    if fileType == "Image":
+        result = opencv_image_interpreter(path)
+        mirrors.append(Mirror("Type", ( result[-2], result[-1]), (result[0], result[1])))
+        mirrors.append(Mirror("Type", (result[-4], result[-3]), (result[-2], result[-1])))
+        i = 0
+        for j in result:
+            if (i % 2 == 0) and len(result) - 4 >= i:
+                if result[i] == result[-4]:
+                    pass
+                else:
+                    mirrors.append(Mirror("Line", (result[i], result[i + 1]), (result[i + 2], result[i + 3])))
+            i += 1
 
 class Mirror:
     def __init__(self, type, startpos, endpos, **kwargs): # add data for calculations with ellipse and arc, investigate *args and **kwargs
@@ -96,13 +109,13 @@ class Mirror:
                     self.dimensions = value # (width, height) the values of a and b
                     
             
-        self.a_squared = pow(self.offset[0], 2)
-        self.b_squared = pow(self.offset[1], 2)
-        self.ab = self.offset[0] * self.offset[1]
-        self.height_squared = pow(self.dimensions[1], 2)
-        self.width_squared = pow(self.dimensions[0], 2)
-        self.focusA = None
-        self.focusB = None   # add calculations here
+            self.a_squared = pow(self.offset[0], 2)
+            self.b_squared = pow(self.offset[1], 2)
+            self.ab = self.offset[0] * self.offset[1]
+            self.height_squared = pow(self.dimensions[1], 2)
+            self.width_squared = pow(self.dimensions[0], 2)
+            self.focusA = None
+            self.focusB = None   # add calculations here
 
         if type == "Arc":
             for key, value in kwargs.items():
@@ -167,8 +180,7 @@ class Mirror:
             normal = pygame.Vector2.normalize(AP * AP.magnitude() + BP * BP.magnitude())
         
         if self.type == "Arc":
-            pass # add the bit that does the arc normal vector calculation here, it is -CP where C is center and P is intersection
-
+           normal = -1 * (pygame.Vector2((intersection[0] - self.center[0]), (intersection[1] - self.center[1])))
         return normal
             
                     
@@ -180,40 +192,51 @@ class Mirror:
         if self.type == "Arc":
             pass
             
+def initRays(mpos:tuple, n_rays:int):
+    arr = np.empty((n_rays, 4))
+    for i in range(0, n_rays):
+        angle = 2 * np.pi * (i / n_rays)
+        v_x = np.cos(angle)
+        v_y = np.sin(angle)
+
+        mx, my = mpos
+        if i < n_rays:
+            arr[i:i+1] = [v_x, v_y, mx, my]
+        else:
+            arr[i] = [v_x, v_y, mx, my] 
+
+    return arr
 
 display = pygame.Surface((screenx, screeny))
 
-running = True
+generateMirrors("Image", ["MK2", "files", "assets", "penrose_unilluminable_room.png"])
 
 
 def main():
+    running = True
+    currentCursorPos = (screenx / 2, screeny / 2)
+    mousepos = currentCursorPos
+    newArray = initRays(currentCursorPos, RAYS)
     while running:
-        for event in pygame.event.get:
+        for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running == False
             if event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode(event.size, pygame.RESIZABLE | pygame.HWSURFACE)
             if event.type == pygame.MOUSEBUTTONUP:
-                refresh = True
                 mx, my = pygame.mouse.get_pos()
                 mousepos = (mx, my)
-  
 
-def multiProcessor():
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        result = executor.map(printList, arr)
-        # add code that unwraps the numpy array here
-        print(result)
+        if  mousepos is not None and mousepos != currentCursorPos:
+            currentCursorPos = mousepos
+            newArray = initRays(currentCursorPos, RAYS)
 
-     # this function is to contain code that takes the ray data workload and distributes it on X processes
-         # then returns the calculated datasets
-         # would inputting the array with the ray data work?
-         # it may be necessary to use the old structure to test the current code
-         # i also need to work on the gui, to be able to design shapes with ease
-arr = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
-
-def printList(list):
-    return list
-
+        with concurrent.futures.ProcessPoolExecutor() as executor:
+            result = executor.map(physics_calculator, newArray)
+            print(result)
+        for mirror in mirrors:
+            mirror.draw()
+        
+        print("frame")        
 if __name__ == "__main__":
-    print(multiProcessor())
+    main()

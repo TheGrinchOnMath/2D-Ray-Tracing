@@ -1,7 +1,6 @@
-import os, pathlib, cv2
+import os, pathlib, cv2, pygame, concurrent.futures, math
 import numpy as np
 import multiprocessing as mp
-
 """
 print(os.getcwd())
 
@@ -66,8 +65,8 @@ def arr_test(dimensions:tuple):
     for col in range(0, columnns):
         
 
-    return arr
-    """
+        return arr
+    
 """
 arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 print(arr, "\n")
@@ -79,9 +78,9 @@ print(arr)
 arr = np.empty((10, 4))
 arr[1:-8] = 0
 print(arr)
-"""
 
-"""
+
+
 arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 for n in range(0, 3):
     if n < 2:
@@ -89,10 +88,10 @@ for n in range(0, 3):
     else:
         print(arr[n:], "\n")
 
-"""
+
 # to replace an entire columnn, do array[:,i] where i is the value of the collumn minus 1 (make sure that the array is of the right dimensions)
 
-
+"""
 
 def read_file(path:str, type:str): # returns either the json data or the contour coords list from the image processing
     if type == "json":
@@ -129,3 +128,57 @@ def render(ray_data, walls):
 arr = np.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 for a in arr: # iterates through array lines, 3 with the current array
     print(a) # prints every line of the array in turn
+
+
+def multiProcessor():
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+        result = executor.map(printList, arr)
+        # add code that unwraps the numpy array here
+        for r in result:
+            print(r)
+
+
+     # this function is to contain code that takes the ray data workload and distributes it on X processes
+         # then returns the calculated datasets
+         # would inputting the array with the ray data work?
+         # it may be necessary to use the old structure to test the current code
+         # i also need to work on the gui, to be able to design shapes with ease
+arr = np.array([[1, 2, 3, 4], [5, 6, 7, 8], [9, 10, 11, 12]])
+
+def printList(list):
+    out = []
+    for i in list:
+        i *= 2
+        out.append(i)
+    return out
+
+def physics_calculator(input, mirrors): #input is structured as follows: [originx, originy, vectorx, vectory]
+    # consider storing the line equation for the rays in addition to what we already have, cuz i use both line equation parameters and vectors...
+    pos = pygame.Vector2(input[0], input[1])
+    vect = pygame.Vector2(input[2], input[3])
+    slope = input[3] / input[2]
+    heightAtOrigin = None # add formula for finding this based on the inputs
+    mark = 1000000
+    collisionPos = None
+    for mirror in mirrors: # check all mirrors, check intersection, find closest mirror and store ID
+        collision = mirror.intersect(pos, vect, slope, heightAtOrigin)
+        if collision is not None:
+            collisionPos = collision
+            dist = math.sqrt(pow((collision[0] - pos[0]), 2) + pow((collision[1] - pos[1]), 2)) # start is the origin of the ray at position n of the array (arrays start at 0, mind)
+            if dist < mark:
+                mark = dist
+                mirrorId = id(mirror)
+                vect = None # vect is the directional vector of the incident ray that is being calculated
+    for mirror in mirrors: # get the right mirror and use its data to determine the reflection
+        if id(mirror) == mirrorId:
+            normal = mirror.normalVector(collisionPos)
+            rVect = pygame.Vector2.reflect(vect, normal)
+        continue
+    ray_out = [collisionPos, rVect]
+    pos_out = [pos, collisionPos]
+
+    return ray_out, pos_out # ray_out is the ray data from the reflection, pos_out is both ends of the calculated ray
+
+if __name__ == "__main__":
+    print(multiProcessor())
+    """
