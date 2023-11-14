@@ -2,8 +2,8 @@ import pygame, math, cv2, os, sys, concurrent.futures
 import numpy as np
 
 RAYS = 1000
-MAX_REFLECTIONS = 5
-dirs = ["MK2", "files", "assets", "Tokarsky_unilluminable_room.png"]
+MAX_REFLECTIONS = 100
+dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
 pygame.init()
 display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
@@ -13,9 +13,9 @@ screen = pygame.Surface((screenx, screeny))
 class Mirror:
     def __init__(self, type, startpos, endpos, **kwargs): # add data for calculations with ellipse and arc, investigate *args and **kwargs
         self.type = type
-        self.startpos = pygame.Vector2(startpos)
-        self.endpos = pygame.Vector2(endpos)
-        self.normal = pygame.Vector2((endpos[1] - startpos[1]), (startpos[0] - endpos[0]))
+        self.startpos = startpos
+        self.endpos = endpos
+        self.normal = pygame.Vector2(((startpos[1] - endpos[1]), (endpos[0] - startpos[0])))
         """
         if type == "Ellipse":
             for key, value in kwargs.items():
@@ -44,10 +44,9 @@ class Mirror:
     def intersect(self, rayOrigin, rayVector):
         x1, y1 = self.startpos
         x2, y2 = self.endpos
-        x3 = rayOrigin[0]
-        y3 = rayOrigin[1]
-        x4 = rayOrigin[0] + rayVector[0]
-        y4 = rayOrigin[1] + rayVector[1]
+        x3, y3 = rayOrigin
+        x4, y4 = rayOrigin + rayVector
+
         denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
         numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
         if denominator == 0:
@@ -59,8 +58,6 @@ class Mirror:
             y = y1 + t * (y2 - y1)
             collidePos = pygame.math.Vector2(x, y)
             return collidePos
-        else:
-            return None
     """
         if self.type == "Ellipse":
             condition = False # add the bit that checks if there is supposed to be an intersection at all, and which intersection to regard as being the case
@@ -130,7 +127,7 @@ def opencv_image_interpreter(path):
     _, threshold = cv2.threshold(resize, 110, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        approx = cv2.approxPolyDP(cnt, 1, True)
+        approx = cv2.approxPolyDP(cnt, 0.5, True)
         n = approx.ravel()
     return n
 
@@ -138,8 +135,6 @@ def reflector(startRayData):
     mark = 100000
     result = None
     collision = None
-    print(startRayData)
-    print(type(startRayData))
     data = startRayData
     start = (data[0], data[1])
     vect = pygame.Vector2(data[2], data[3])
@@ -152,28 +147,28 @@ def reflector(startRayData):
             if dist < mark:
                 mark = dist
                 intersect = result
-                normalVector = mirror.normalVector(intersect)
+                ID = id(mirror)
     if collision is not None:
-        newVector = pygame.Vector2.reflect(vect, normalVector)
-        output = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
+        for mirror in mirrors:
+            if ID == id(mirror):
+                newVector = reflect(vect, mirror.normalVector(intersect))
+                output = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
     return output
 
 def processor(startRayArr):
     global counter
     output = np.empty((RAYS, 6))
-    arr = startRayArr.tolist()
+
     with concurrent.futures.ProcessPoolExecutor() as executor:
-        out = executor.map(reflector, arr) # input needs to be list of lists, not ndarray
-    for index, data in enumerate(out):
-        for e in index:
-            print(e)
-        output[data] = index
+        out = executor.map(reflector, startRayArr) # input needs to be list of lists, not ndarray
+    for index, d in enumerate(out):
+        output[index] = d
     return output
-        
-        
 
-        
-
+def reflect(incidentVector, normalVector):
+    var1 = 2 * incidentVector.dot(normalVector)
+    result = incidentVector - var1 / normalVector.magnitude_squared() * normalVector
+    return result
 
 def render(rayArr, mirrors, reset):
     global counter
@@ -195,7 +190,7 @@ def render(rayArr, mirrors, reset):
     elif reset is False:
         for mirror in mirrors:
             mirror.draw((255, 255, 255))
-        reflectArr = reflector(rayArr)
+        reflectArr = processor(rayArr)
         outArr = np.empty((RAYS, 4))
         for i in range(RAYS):
             iData = reflectArr[i]
