@@ -1,5 +1,4 @@
 import pygame, os, cv2, sys, ctypes, random, math, multiprocessing
-from lib import *
 import numpy as np
 import concurrent.futures
 
