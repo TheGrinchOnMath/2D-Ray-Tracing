@@ -1,4 +1,6 @@
-import pygame, math, cv2, os, sys, concurrent.futures
+import os
+os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+import pygame, math, cv2, sys, concurrent.futures
 import numpy as np
 
 RAYS = 1000
@@ -239,7 +241,8 @@ def main():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running = False
+                pygame.quit()
+                sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
                 rays = render(rays, mirrors, True)
         rays = render(rays, mirrors, False)
@@ -247,5 +250,6 @@ def main():
             rays = render(rays, mirrors, True)
 
 if __name__ == "__main__":
+    
     main()
     

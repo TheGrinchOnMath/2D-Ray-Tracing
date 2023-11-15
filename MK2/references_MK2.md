@@ -149,3 +149,24 @@ links consulted:
 
    https://www.desmos.com/calculator/royt2khrcr
    how to get the tangent to a point on an ellipse, visualized in Desmos calculator
+
+   https://mpmath.org/doc/current/
+   mpmath is a python library that gives the user higher precision floating point objects and calculations
+
+   https://stackoverflow.com/questions/3061761/numpy-array-dimensions
+   how to get the dimensions of a numpy array
+
+   https://stackoverflow.com/questions/9539921/how-do-i-define-a-function-with-optional-arguments
+   how to use *args and **kwargs in python
+
+   https://docs.python.org/3/library/multiprocessing.html
+   python multiprocessing library documentation
+
+   https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor
+   concurrent.futures.processpoolexecutor documentation
+
+   https://www.geeksforgeeks.org/processpoolexecutor-class-in-python/
+   how to use the processpoolexecutor class in python
+
+   https://stackoverflow.com/questions/11522933/is-floating-point-arbitrary-precision-available
+   the mpmath library pointer
