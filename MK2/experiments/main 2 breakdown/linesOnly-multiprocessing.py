@@ -1,10 +1,10 @@
 import os
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
-import pygame, math, cv2, sys, concurrent.futures
+import pygame, math, cv2, sys, concurrent.futures, random
 import numpy as np
 
-RAYS = 1000
-MAX_REFLECTIONS = 100
+RAYS = 1
+MAX_REFLECTIONS = 5
 dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
 pygame.init()
@@ -196,14 +196,18 @@ def render(rayArr, mirrors, reset):
         outArr = np.empty((RAYS, 4))
         for i in range(RAYS):
             iData = reflectArr[i]
-            pygame.draw.line(screen, (255, 255, 0), (iData[0], iData[1]), (iData[2], iData[3]))
+            pygame.draw.line(screen, randomColor(), (iData[0], iData[1]), (iData[2], iData[3]), 2)
             outArr[i] = [iData[2], iData[3], iData[4], iData[5]]
 
         display.blit(screen, (0, 0))
         pygame.display.update()
     counter += 1
     return outArr
-
+def randomColor():
+    r = random.randint(1, 255)
+    g = random.randint(1, 255)
+    b = random.randint(1, 255)
+    return (r, g, b)
 
 def generateMirrors(fileType, filePath): # could be improved to check for extensions and act accordingly
     global mirrors
@@ -245,9 +249,8 @@ def main():
                 sys.exit()
             if event.type == pygame.MOUSEBUTTONUP:
                 rays = render(rays, mirrors, True)
-        rays = render(rays, mirrors, False)
-        if counter >= MAX_REFLECTIONS:
-            rays = render(rays, mirrors, True)
+        if counter <= MAX_REFLECTIONS:
+            rays = render(rays, mirrors, False)
 
 if __name__ == "__main__":
     

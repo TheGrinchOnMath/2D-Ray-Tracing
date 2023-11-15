@@ -1,9 +1,9 @@
 import pygame, math, cv2, os, sys
 import numpy as np
 
-RAYS = 5
-MAX_REFLECTIONS = 5
-dirs = ["MK2", "files", "assets", "Tokarsky_unilluminable_room.png"]
+RAYS = 1
+MAX_REFLECTIONS = 10
+dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
 pygame.init()
 display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
@@ -90,8 +90,7 @@ class Mirror:
         """
         
     def normalVector(self, intersection):
-        if self.type == "Line":
-            normal = self.normal
+        pygame.draw.line(screen, (255, 10, 10), intersection, intersection + self.normal.normalize() * 50, 2)
         """
         if self.type == "Ellipse":
             AP = pygame.Vector2(intersection - self.focusA)
@@ -102,7 +101,7 @@ class Mirror:
            normal = -1 * (pygame.Vector2((intersection[0] - self.center[0]), (intersection[1] - self.center[1])).normalize)
            """
         
-        return normal
+        return self.normal
          
                     
     def draw(self, color): # this needs work. the line is easy, but the ellipses might be a little harder. need to rethink the structure of this one
@@ -148,19 +147,30 @@ def reflector(startRayArr):
             result = mirror.intersect(start, vect)
             if result is not None:
                 collision = result
-                dist = math.sqrt((collision[0] - start[0])**2 +(collision[1] - start[1])**2)
+                dist = math.sqrt((start[0] - collision[0])**2 +(start[1] - collision[1])**2)
                 if dist < mark:
                     mark = dist
                     intersect = result
                     ID = id(mirror)
         if collision is not None:
             for mirror in mirrors:
+                middle = (mirror.endpos + mirror.startpos) / 2
+                pygame.draw.line(screen, (0, 0, 255), middle, middle + mirror.normal.normalize() * 50)
                 if ID == id(mirror):
-                    newVector = pygame.Vector2.reflect(vect, mirror.normal)
+                    normal = mirror.normalVector(intersect)
+                    newVector = reflect(vect, normal)
+                    pygame.draw.line(screen, (100, 255, 255), intersect, intersect + normal.normalize() * 100)
                     output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
-                    pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10)
-                pygame.draw.circle(screen, (0, 255, 0), collision, 3)
+                    # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)
+                
     return output
+
+def reflect(incidentVector, normalVector):
+    i = incidentVector
+    n = normalVector.normalize()
+    var1 = 2 * i.dot(n)
+    result = i - var1 / n.magnitude_squared() * n
+    return result
 
 
 def render(rayArr, mirrors, reset):
