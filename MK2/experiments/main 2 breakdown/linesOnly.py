@@ -1,7 +1,7 @@
 import pygame, math, cv2, os, sys
 import numpy as np
 
-RAYS = 1000
+RAYS = 5
 MAX_REFLECTIONS = 5
 dirs = ["MK2", "files", "assets", "Tokarsky_unilluminable_room.png"]
 
@@ -152,10 +152,14 @@ def reflector(startRayArr):
                 if dist < mark:
                     mark = dist
                     intersect = result
-                    normalVector = mirror.normalVector(intersect)
+                    ID = id(mirror)
         if collision is not None:
-            newVector = pygame.Vector2.reflect(vect, normalVector)
-            output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
+            for mirror in mirrors:
+                if ID == id(mirror):
+                    newVector = pygame.Vector2.reflect(vect, mirror.normal)
+                    output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
+                    pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10)
+                pygame.draw.circle(screen, (0, 255, 0), collision, 3)
     return output
 
 
@@ -231,9 +235,8 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONUP:
                 rays = render(rays, mirrors, True)
-        rays = render(rays, mirrors, False)
-        if counter >= MAX_REFLECTIONS:
-            rays = render(rays, mirrors, True)
+        if counter <= MAX_REFLECTIONS:
+            rays = render(rays, mirrors, False)
 
 if __name__ == "__main__":
     main()
