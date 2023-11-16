@@ -44,20 +44,19 @@ class Mirror:
         """
 
     def intersect(self, rayOrigin, rayVector):
-        x1, y1 = self.startpos
-        x2, y2 = self.endpos
-        x3, y3 = rayOrigin
-        x4, y4 = rayOrigin + rayVector
+        a1, a2 = self.startpos
+        b1, b2 = self.endpos
+        o1, o2 = rayOrigin
+        v1, v2 = rayVector.normalize()
 
-        denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+        denominator = v2 * (b1 - a1) - v1 * (b2 - a2)
         if denominator == 0:
             return None
-        u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
-        t = numerator / denominator
-        if 1 > t > 0 and u > 0:
-            x = x1 + t * (x2 - x1)
-            y = y1 + t * (y2 - y1)
+        m = ((o1 - a1) * (b2 - a2) - (o2 - a2) * (b1 - a1)) / denominator
+        n = (o1 - a1 + (m * v1)) / (b1 - a1)
+        if 1 > n > 0 and m > 0:
+            x = o1 + m * v1
+            y = o2 + m * v2
             collidePos = pygame.math.Vector2(x, y)
             return collidePos
     """
@@ -153,7 +152,7 @@ def reflector(startRayData):
     if collision is not None:
         for mirror in mirrors:
             if ID == id(mirror):
-                newVector = reflect(vect, mirror.normalVector(intersect))
+                newVector = vect.reflect(mirror.normalVector(intersect))
                 output = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
     return output
 
@@ -166,11 +165,6 @@ def processor(startRayArr):
     for index, d in enumerate(out):
         output[index] = d
     return output
-
-def reflect(incidentVector, normalVector):
-    var1 = 2 * incidentVector.dot(normalVector)
-    result = incidentVector - var1 / normalVector.magnitude_squared() * normalVector
-    return result
 
 def render(rayArr, mirrors, reset):
     global counter
