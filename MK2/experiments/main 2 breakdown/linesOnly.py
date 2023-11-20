@@ -1,4 +1,4 @@
-import pygame, math, cv2, os, sys
+import pygame, math, cv2, os, random
 import numpy as np
 
 RAYS = 1
@@ -42,21 +42,18 @@ class Mirror:
         """
 
     def intersect(self, rayOrigin, rayVector):
-        x1, y1 = self.startpos
-        x2, y2 = self.endpos
-        x3 = rayOrigin[0]
-        y3 = rayOrigin[1]
-        x4 = rayOrigin[0] + rayVector[0]
-        y4 = rayOrigin[1] + rayVector[1]
-        denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
-        numerator = (x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)
+        a1, a2 = self.startpos
+        b1, b2 = self.endpos
+        p1, p2 = rayOrigin
+        v1, v2 = rayVector
+        denominator = v2*(b1-a1) - v1*(b2-a2)
         if denominator == 0:
             return None
-        u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator
-        t = numerator / denominator
-        if 1 > t > 0 and u > 0:
-            x = x1 + t * (x2 - x1)
-            y = y1 + t * (y2 - y1)
+        m = ((b2-a2)*(p1-a1) - (b1-a1)*(p2-a2)) / denominator
+        n = (v2*(p1-a1)-v1*(p2-a2)) / denominator
+        if 1 > n > 0 and m > 0:
+            x = p1 + m*v1
+            y = p2 + m*v2
             collidePos = pygame.math.Vector2(x, y)
             return collidePos
         else:
@@ -143,7 +140,15 @@ def reflector(startRayArr):
         data = startRayArr[i]
         start = (data[0], data[1])
         vect = pygame.Vector2(data[2], data[3])
+        IDs = []
         for mirror in mirrors:
+            for i in IDs:
+                if id(mirror) == i:
+                    print("Something went wrong with the IDs")
+                    raise NameError
+                else:
+                    IDs.append(id(mirror))
+
             result = mirror.intersect(start, vect)
             if result is not None:
                 collision = result
@@ -153,25 +158,19 @@ def reflector(startRayArr):
                     intersect = result
                     ID = id(mirror)
         if collision is not None:
+            pygame.draw.circle(screen, "gray", collision, 4)
             for mirror in mirrors:
                 middle = (mirror.endpos + mirror.startpos) / 2
                 pygame.draw.line(screen, (0, 0, 255), middle, middle + mirror.normal.normalize() * 50)
                 if ID == id(mirror):
+                    print(ID)
                     normal = mirror.normalVector(intersect)
-                    newVector = reflect(vect, normal)
-                    pygame.draw.line(screen, (100, 255, 255), intersect, intersect + normal.normalize() * 100)
+                    newVector = pygame.math.Vector2.reflect(vect, normal)
+                    pygame.draw.line(screen,(10, 255, 255), intersect, intersect + normal.normalize() * 100)
                     output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
                     # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)
                 
     return output
-
-def reflect(incidentVector, normalVector):
-    i = incidentVector
-    n = normalVector.normalize()
-    var1 = 2 * i.dot(n)
-    result = i - var1 / n.magnitude_squared() * n
-    return result
-
 
 def render(rayArr, mirrors, reset):
     global counter
@@ -195,9 +194,10 @@ def render(rayArr, mirrors, reset):
             mirror.draw((255, 255, 255))
         reflectArr = reflector(rayArr)
         outArr = np.empty((RAYS, 4))
+        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         for i in range(RAYS):
             iData = reflectArr[i]
-            pygame.draw.line(screen, (255, 255, 0), (iData[0], iData[1]), (iData[2], iData[3]))
+            pygame.draw.line(screen, color, (iData[0], iData[1]), (iData[2], iData[3]))
             outArr[i] = [iData[2], iData[3], iData[4], iData[5]]
 
         display.blit(screen, (0, 0))

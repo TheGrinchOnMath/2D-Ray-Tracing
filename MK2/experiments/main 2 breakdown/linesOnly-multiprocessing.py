@@ -46,17 +46,18 @@ class Mirror:
     def intersect(self, rayOrigin, rayVector):
         a1, a2 = self.startpos
         b1, b2 = self.endpos
-        o1, o2 = rayOrigin
+        p1, p2 = rayOrigin
         v1, v2 = rayVector.normalize()
 
-        denominator = v2 * (b1 - a1) - v1 * (b2 - a2)
+        denominator = v2 * (a1 - b1) - v1 * (a2 - b2)
         if denominator == 0:
             return None
-        m = ((o1 - a1) * (b2 - a2) - (o2 - a2) * (b1 - a1)) / denominator
-        n = (o1 - a1 + (m * v1)) / (b1 - a1)
+        
+        m = ((b2 -a2) * (p1 - a1) - (b1 - a1) * (p2 - a2)) / denominator
+        n = (v2 * (p1 - a1) + v1 * (p2 - a2)) / denominator
         if 1 > n > 0 and m > 0:
-            x = o1 + m * v1
-            y = o2 + m * v2
+            x = p1 + m * v1
+            y = p2 + m * v2
             collidePos = pygame.math.Vector2(x, y)
             return collidePos
     """
@@ -135,7 +136,6 @@ def opencv_image_interpreter(path):
 def reflector(startRayData):
     mark = 100000
     result = None
-    collision = None
     data = startRayData
     start = (data[0], data[1])
     vect = pygame.Vector2(data[2], data[3])
@@ -143,16 +143,16 @@ def reflector(startRayData):
     for mirror in mirrors:
         result = mirror.intersect(start, vect)
         if result is not None:
-            collision = result
-            dist = math.sqrt((collision[0] - start[0])**2 +(collision[1] - start[1])**2)
+            print("\t", result)
+            dist = math.sqrt((result[0] - start[0])**2 +(result[1] - start[1])**2)
             if dist < mark:
                 mark = dist
                 intersect = result
                 ID = id(mirror)
-    if collision is not None:
+    if result is not None:
         for mirror in mirrors:
             if ID == id(mirror):
-                newVector = vect.reflect(mirror.normalVector(intersect))
+                newVector = pygame.math.Vector2.reflect(vect, mirror.normalVector(intersect))
                 output = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
     return output
 
@@ -188,9 +188,10 @@ def render(rayArr, mirrors, reset):
             mirror.draw((255, 255, 255))
         reflectArr = processor(rayArr)
         outArr = np.empty((RAYS, 4))
+        color = randomColor()
         for i in range(RAYS):
             iData = reflectArr[i]
-            pygame.draw.line(screen, randomColor(), (iData[0], iData[1]), (iData[2], iData[3]), 2)
+            pygame.draw.line(screen, color, (iData[0], iData[1]), (iData[2], iData[3]), 2)
             outArr[i] = [iData[2], iData[3], iData[4], iData[5]]
 
         display.blit(screen, (0, 0))
