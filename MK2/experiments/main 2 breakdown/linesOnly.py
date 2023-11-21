@@ -146,8 +146,7 @@ def reflector(startRayArr):
                 if id(mirror) == i:
                     print("Something went wrong with the IDs")
                     raise NameError
-                else:
-                    IDs.append(id(mirror))
+                IDs.append(id(mirror))
 
             result = mirror.intersect(start, vect)
             if result is not None:
@@ -163,9 +162,9 @@ def reflector(startRayArr):
                 middle = (mirror.endpos + mirror.startpos) / 2
                 pygame.draw.line(screen, (0, 0, 255), middle, middle + mirror.normal.normalize() * 50)
                 if ID == id(mirror):
-                    print(ID)
                     normal = mirror.normalVector(intersect)
                     newVector = pygame.math.Vector2.reflect(vect, normal)
+                    print(vect, newVector)
                     pygame.draw.line(screen,(10, 255, 255), intersect, intersect + normal.normalize() * 100)
                     output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
                     # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)
