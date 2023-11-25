@@ -1,7 +1,7 @@
 import pygame, math, cv2, os, random
 import numpy as np
 
-RAYS = 1
+RAYS = 1000
 MAX_REFLECTIONS = 10
 dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
@@ -164,7 +164,6 @@ def reflector(startRayArr):
                 if ID == id(mirror):
                     normal = mirror.normalVector(intersect)
                     newVector = pygame.math.Vector2.reflect(vect, normal)
-                    print(vect, newVector)
                     pygame.draw.line(screen,(10, 255, 255), intersect, intersect + normal.normalize() * 100)
                     output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
                     # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)
