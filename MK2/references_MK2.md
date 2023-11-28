@@ -170,3 +170,6 @@ links consulted:
 
    https://stackoverflow.com/questions/11522933/is-floating-point-arbitrary-precision-available
    the mpmath library pointer
+
+   https://en.wikipedia.org/wiki/Vector_projection
+   Vector projections, used in vector reflection equations

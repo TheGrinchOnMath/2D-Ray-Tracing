@@ -2,7 +2,7 @@ import pygame, math, cv2, os, random
 import numpy as np
 
 RAYS = 1
-MAX_REFLECTIONS = 10
+MAX_REFLECTIONS = 5
 dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
 pygame.init()
@@ -142,13 +142,6 @@ def reflector(startRayArr):
         vect = pygame.Vector2(data[2], data[3])
         IDs = []
         for mirror in mirrors:
-            for i in IDs:
-                if id(mirror) == i:
-                    print("Something went wrong with the IDs")
-                    raise NameError
-                else:
-                    IDs.append(id(mirror))
-
             result = mirror.intersect(start, vect)
             if result is not None:
                 collision = result
@@ -160,21 +153,27 @@ def reflector(startRayArr):
         if collision is not None:
             pygame.draw.circle(screen, "gray", collision, 4)
             for mirror in mirrors:
-                middle = (mirror.endpos + mirror.startpos) / 2
-                pygame.draw.line(screen, (0, 0, 255), middle, middle + mirror.normal.normalize() * 50)
                 if ID == id(mirror):
-                    print(ID)
                     normal = mirror.normalVector(intersect)
-                    newVector = pygame.math.Vector2.reflect(vect, normal)
+                    new = reflect(vect, normal)
                     pygame.draw.line(screen,(10, 255, 255), intersect, intersect + normal.normalize() * 100)
-                    output[i] = [start[0], start[1], intersect[0], intersect[1], newVector[0], newVector[1]]
-                    # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)
-                
+                    output[i] = [start[0], start[1], intersect[0], intersect[1], new[0], new[1]]
+                    print(vect, new, normal)
+                    # pygame.draw.line(screen, (255, 0, 0), collision, collision + mirror.normal.normalize() * screenx / 10, 3)          
     return output
 
+def reflect(incident, normal):
+    var1 = incident[0] * normal[0] + incident[1] * normal[1]
+    var2 = normal[0] ** 2 + normal[1] ** 2
+    out = incident - (2 * (var1 / var2) * normal)
+    return out
+
+    
 def render(rayArr, mirrors, reset):
     global counter
     if reset is True:
+
+        print("\n \n \n")
         counter = 0
         screen.fill((5, 5, 5))
         outArr = np.empty((RAYS, 4))
@@ -190,14 +189,16 @@ def render(rayArr, mirrors, reset):
                 outArr[i] = [mx, my, v_x, v_y] 
 
     elif reset is False:
-        for mirror in mirrors:
-            mirror.draw((255, 255, 255))
+
+        # for mirror in mirrors:
+            # mirror.draw((255, 255, 255))
+            # pygame.draw.circle(screen, "purple", mirror.endpos, 4, 3)
         reflectArr = reflector(rayArr)
         outArr = np.empty((RAYS, 4))
         color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
         for i in range(RAYS):
             iData = reflectArr[i]
-            pygame.draw.line(screen, color, (iData[0], iData[1]), (iData[2], iData[3]))
+            pygame.draw.line(screen, color, (iData[0], iData[1]), (iData[2], iData[3]), 2)
             outArr[i] = [iData[2], iData[3], iData[4], iData[5]]
 
         display.blit(screen, (0, 0))
@@ -238,7 +239,7 @@ def main():
     global running, counter
     mouseMoved = False
     mousePos = (screenx / 2, screeny / 2)
-    rays = render(mousePos, RAYS, True)
+    rays = render(mousePos, mirrors, True)
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
