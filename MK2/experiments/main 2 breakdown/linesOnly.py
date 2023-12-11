@@ -1,8 +1,8 @@
 import pygame, math, cv2, os, random
 import numpy as np
 
-RAYS = 1
-MAX_REFLECTIONS = 5
+RAYS = 1000
+MAX_REFLECTIONS = 50
 dirs = ["MK2", "files", "assets", "penrose_unilluminable_room.png"]
 
 pygame.init()
@@ -190,9 +190,9 @@ def render(rayArr, mirrors, reset):
 
     elif reset is False:
 
-        # for mirror in mirrors:
-            # mirror.draw((255, 255, 255))
-            # pygame.draw.circle(screen, "purple", mirror.endpos, 4, 3)
+        for mirror in mirrors:
+            mirror.draw((255, 255, 255))
+            pygame.draw.circle(screen, "purple", mirror.endpos, 4, 3)
         reflectArr = reflector(rayArr)
         outArr = np.empty((RAYS, 4))
         color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))

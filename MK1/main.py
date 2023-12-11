@@ -46,9 +46,9 @@ the code will produce nothing.
 this does, however, depend on the CPU of the computer running the code.
 """
 
-DIR = ["assets", "Tokarsky_unilluminable_room.png"]
-NUM_RAYS = 750
-MAX_REFLECTIONS = 250
+DIR = ["MK1", "assets", "Tokarsky_unilluminable_room.png"]
+NUM_RAYS = 75
+MAX_REFLECTIONS = 25
 
 #======DO=NOT=CHANGE======#
 WINDOW_SIZE = (screenx, screeny)
