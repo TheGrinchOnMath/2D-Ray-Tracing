@@ -296,7 +296,7 @@ def main():
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                running == False
+                running = False
             if event.type == pygame.VIDEORESIZE:
                 screen = pygame.display.set_mode(
                     event.size, pygame.RESIZABLE | pygame.HWSURFACE
