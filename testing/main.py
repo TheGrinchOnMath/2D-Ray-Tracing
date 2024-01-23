@@ -62,6 +62,8 @@ class Ellipse:
         endAngle: float,
         eccentricityA: float,
         eccentricityB: float,
+        rectStartPos:tuple,
+        rectEndPos:tuple,
         color: str = "white",
     ):
         # calculate normal vector, save variable
@@ -82,6 +84,7 @@ class Ellipse:
 
         self.eccentricityB = eccentricityB
 
+
     def checkCollision():
         pass
 
@@ -89,7 +92,7 @@ class Ellipse:
         # calculate the rect somehow, for now it should be a function of the angles
         # the rect needs the max height of the ellipse. use eccentricity.
         # for topleft pos, use soe
-        pygame.draw.arc(surface, color, pygame.Rect(()))
+        pygame.draw.arc(surface, color, self.rect, self.startAngle, self.endAngle, width=3)
 
 
 pygame.init()
@@ -97,8 +100,11 @@ pygame.init()
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE, pygame.DOUBLEBUF)
 screenDimensions = screen.get_size()
         
+ellipse = Ellipse((100, 100), (400, 200), 0.5, np.pi, 100, 200, (100, 100), (400, 200))
 
-
+ellipse.draw()
+pygame.display.update()
+time.sleep(5)
 """
 def testPygameArcs(surface, color, boundingRect, startAngle, endAngle):
     screen.fill("black")
