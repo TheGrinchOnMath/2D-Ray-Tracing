@@ -86,7 +86,10 @@ class Ellipse:
         pass
 
     def draw(self, surface, color="white"):
-        tempSurface = pygame.Surface(screenDimensions, pygame.SRCALPHA, )
+        # calculate the rect somehow, for now it should be a function of the angles
+        # the rect needs the max height of the ellipse. use eccentricity.
+        # for topleft pos, use soe
+        pygame.draw.arc(surface, color, pygame.Rect(()))
 
 
 pygame.init()
