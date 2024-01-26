@@ -62,8 +62,8 @@ class Ellipse:
         endAngle: float,
         eccentricityA: float,
         eccentricityB: float,
-        rectStartPos:tuple,
-        rectEndPos:tuple,
+        rectStartPos: tuple,
+        rectEndPos: tuple,
         color: str = "white",
     ):
         # calculate normal vector, save variable
@@ -84,6 +84,10 @@ class Ellipse:
 
         self.eccentricityB = eccentricityB
 
+        self.rect = pygame.Rect(
+            rectStartPos,
+            (rectEndPos[0] - rectStartPos[0], rectEndPos[1] - rectStartPos[1]),
+        )
 
     def checkCollision():
         pass
@@ -92,19 +96,26 @@ class Ellipse:
         # calculate the rect somehow, for now it should be a function of the angles
         # the rect needs the max height of the ellipse. use eccentricity.
         # for topleft pos, use soe
-        pygame.draw.arc(surface, color, self.rect, self.startAngle, self.endAngle, width=3)
+        pygame.draw.arc(
+            surface, color, self.rect, self.startAngle, self.endAngle, width=3
+        )
 
 
 pygame.init()
 
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE, pygame.DOUBLEBUF)
 screenDimensions = screen.get_size()
-        
-ellipse = Ellipse((100, 100), (400, 200), 0.5, np.pi, 100, 200, (100, 100), (400, 200))
 
-ellipse.draw()
-pygame.display.update()
-time.sleep(5)
+ellipse = Ellipse(
+    (100, 50), (400, 200), 2 * np.pi, np.pi, 100, 200, (100, 100), (screenDimensions[0] - 50, screenDimensions[1] / 1.5)
+)
+
+
+def draw():
+    ellipse.draw(screen)
+    pygame.display.update()
+
+
 """
 def testPygameArcs(surface, color, boundingRect, startAngle, endAngle):
     screen.fill("black")
@@ -112,6 +123,8 @@ def testPygameArcs(surface, color, boundingRect, startAngle, endAngle):
     pygame.display.update()
     time.sleep(100)
     print("done!")
+
+ """
 
 pygame.init()
 
@@ -127,5 +140,7 @@ while running:
             running = False
             pygame.quit()
             sys.exit()
+    draw()
+    """
     testPygameArcs(screen, "white", pygame.Rect(100, 100, 300, 100), 0, np.pi)
     """
