@@ -12,6 +12,7 @@ class Line:
         self.normalVector = pygame.Vector2(
             startpos[1] - endpos[1], endpos[0] - startpos[0]
         )
+        self.vector = pygame.Vector2(endpos[0] - startpos[0], endpos[1] - startpos[1])
 
         self.startpos = startpos
         self.endpos = endpos
@@ -22,8 +23,38 @@ class Line:
 
         self.color = color
 
-    def checkCollision(self, ray):
-        pass
+    def checkCollision(self, rayArr):
+        rayVector = pygame.Vector2(rayArr[2], rayArr[3])
+
+        rayStartPos = pygame.Vector2(rayArr[0], rayArr[1])
+
+        # create vectors for dot product
+        # AP
+        vector1 = rayStartPos - pygame.Vector2(self.startpos)
+        # AB
+        vector2 = self.vector
+        # V
+        vector3 = rayVector
+
+        commonDenominator = vector1.dot(vector3)
+
+        # commonDenominator is the dot product of the directing vector
+        # of the mirror and the ray. if they are colinear, and therefore have n
+        if commonDenominator == 0:
+            return None
+
+        else:
+            rayFactor = vector1.dot(vector2)
+            mirrorFactor = vector1.dot(vector3)
+
+            # check if intersection is valid given restrictions
+            if rayFactor > 0 and 1 > mirrorFactor > 0:
+                # calculate using vectors. find new point thanks to the vector factor
+                # we found earlier
+                intersection = rayStartPos + rayFactor * rayVector
+                return intersection
+            else:
+                return None
 
 
 class Arc:
@@ -101,13 +132,23 @@ class Ellipse:
         )
 
 
+
+
+
 pygame.init()
 
 screen = pygame.display.set_mode((0, 0), pygame.RESIZABLE, pygame.DOUBLEBUF)
 screenDimensions = screen.get_size()
 
 ellipse = Ellipse(
-    (100, 50), (400, 200), 2 * np.pi, np.pi, 100, 200, (100, 100), (screenDimensions[0] - 50, screenDimensions[1] / 1.5)
+    (100, 50),
+    (400, 200),
+    2 * np.pi,
+    np.pi,
+    100,
+    200,
+    (100, 100),
+    (screenDimensions[0] - 50, screenDimensions[1] / 1.5),
 )
 
 
