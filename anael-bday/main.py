@@ -5,8 +5,8 @@ import pygame
 import os
 import numpy as np
 
-RAYS = 11
-REFLECT_CAP = 100
+RAYS = 1
+REFLECT_CAP = 10
 CWD = os.getcwd()
 ASSETSPATH = ["anael-bday", "assets"]
 IMAGE = "penrose_unilluminable_room.png"
@@ -65,8 +65,8 @@ class Mirror:
         n = (v2 * (p1 - a1) - v1 * (p2 - a2)) / denominator
 
         if 1 > n > 0 and m > 0:
-            x = p1 + m * v1
-            y = p2 + m * v2
+            x = a1 + n * (b1 - a1)
+            y = a2 + n * (b2 - a2)
             collidePos = (x, y)
             return collidePos
         else:
@@ -87,8 +87,12 @@ def rayPhysicsHandler(rayArr):
     for mirror in mirrors:
         result = mirror.intersect(startPos, vect)
         if result is not None:
+            # remove later, mostly for debug purposes
+            pygame.draw.circle(screen, "red", result, 5)
             collision = result
-            dist= np.sqrt((startPos[0] - collision[0])**2 +(startPos[1] - collision[1])**2)
+            dist = np.sqrt(
+                (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
+            )
             if dist < mark:
                 mark = dist
                 closest = collision
@@ -96,8 +100,19 @@ def rayPhysicsHandler(rayArr):
 
     if closest is not None:
         pygame.draw.circle(screen, "green", closest, 10)
-        newVector = pygame.Vector2.reflect(vect, normal)
-        output = [startPos[0], startPos[1], closest[0], closest[1], newVector[0], newVector[1]]
+        vect_unit = vect.normalize()
+        newVector = vect_unit.reflect(normal)
+        print(vect_unit, newVector.normalize())
+        pygame.draw.line(screen, "yellow", closest, closest + newVector.normalize() * 100, 5)
+
+        output = [
+            startPos[0],
+            startPos[1],
+            closest[0],
+            closest[1],
+            newVector[0],
+            newVector[1],
+        ]
 
     return output
 
@@ -151,7 +166,9 @@ def distributor(rayMatrix):
             output[i] = out
         except ValueError:
             errors += 1
-    print(f"error count for frame no ({frame_counter}): {errors}") if errors > 0 else None
+    print(
+        f"error count for frame no ({frame_counter}): {errors}"
+    ) if errors > 0 else None
     return output
 
 
@@ -166,7 +183,7 @@ def generateMirrors(PATH):
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
         # accuracy = 0.03 * cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 5, True)
+        approx = cv2.approxPolyDP(cnt, 1, True)
         n = approx.ravel()
 
     mirrors.append(Mirror((0, 0), (screenx, 0)))
@@ -186,6 +203,7 @@ def generateMirrors(PATH):
 
 generateMirrors(PATH)
 print(len(mirrors))
+
 
 def main():
     global mousePos
