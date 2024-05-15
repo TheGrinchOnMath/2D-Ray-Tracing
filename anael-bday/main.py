@@ -5,20 +5,18 @@ import pygame
 import os
 import numpy as np
 
-RAYS = 10
-REFLECT_CAP = 10
+RAYS = 11
+REFLECT_CAP = 100
 CWD = os.getcwd()
 ASSETSPATH = ["anael-bday", "assets"]
 IMAGE = "penrose_unilluminable_room.png"
 BGCOLOR = (10, 10, 10)
 ASSETSPATH.append(IMAGE)
 mirrors = []
-
+frame_counter = 0
 
 pygame.init()
-display = pygame.display.set_mode(
-    (0, 0), pygame.HWSURFACE | pygame.FULLSCREEN, pygame.GL_DOUBLEBUFFER
-)
+display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
 screenx, screeny = display.get_size()
 screen = pygame.Surface((screenx, screeny))
 mousePos = (screenx / 2, screeny / 2)
@@ -53,23 +51,26 @@ class Mirror:
         self.endPos = endPos
         self.normVect = pygame.Vector2(endPos[1] - startPos[1], startPos[0] - endPos[0])
 
-    def intersect(self, rayOrigin, rayVect):
-        # variables to match equation
-        Vect1 = pygame.Vector2(self.startPos, self.endPos)
-        Vect2 = pygame.Vector2(self.startPos, rayOrigin)
+    def intersect(self, rayOrigin, rayVector):
+        a1, a2 = self.startPos
+        b1, b2 = self.endPos
+        p1, p2 = rayOrigin
+        v1, v2 = rayVector
 
-        # in older iterations I set the equations myself, but since they use cross products, the cpython implementation is faster
-        denominator = Vect1.cross(rayVect)
-
-        # case in which the ray and the mirror are parralel
+        denominator = v2 * (b1 - a1) - v1 * (b2 - a2)
         if denominator == 0:
             return None
 
-        m = Vect2.cross(Vect1)
-        n = Vect2.cross(rayVect)
+        m = ((b2 - a2) * (p1 - a1) - (b1 - a1) * (p2 - a2)) / denominator
+        n = (v2 * (p1 - a1) - v1 * (p2 - a2)) / denominator
 
-        # this line is a ternary operation: return the collision or None
-        return rayOrigin + m * rayVect if 1 > n > 0 and m > 0 else None
+        if 1 > n > 0 and m > 0:
+            x = p1 + m * v1
+            y = p2 + m * v2
+            collidePos = (x, y)
+            return collidePos
+        else:
+            return None
 
     def draw(self, color, screen):
         pygame.draw.line(screen, color, self.startPos, self.endPos, self.size)
@@ -77,32 +78,34 @@ class Mirror:
 
 def rayPhysicsHandler(rayArr):
     output = []
-    mark = 10_000
-    nult = None
+    mark = 100000
+    closest = None
+    result = None
     data = rayArr
     startPos = (data[0], data[1])
     vect = pygame.Vector2(data[2], data[3])
-    intersect = None
     for mirror in mirrors:
-        nult = mirror.intersect(startPos, vect)
-        if nult is not None:
-            dist = pygame.Vector2(startPos, nult).magnitude()
+        result = mirror.intersect(startPos, vect)
+        if result is not None:
+            collision = result
+            dist= np.sqrt((startPos[0] - collision[0])**2 +(startPos[1] - collision[1])**2)
             if dist < mark:
                 mark = dist
-                intersect = nult
+                closest = collision
                 normal = mirror.normVect
-        else:
-            return output
 
-    if intersect is not None:
+    if closest is not None:
+        pygame.draw.circle(screen, "green", closest, 10)
         newVector = pygame.Vector2.reflect(vect, normal)
-        output = [startPos, intersect, newVector]
+        output = [startPos[0], startPos[1], closest[0], closest[1], newVector[0], newVector[1]]
+
+    return output
 
 
-def render(rayMatrix, net):
-    global counter
+def render(rayMatrix, reset):
+    global counter, frame_counter
     output = np.empty((RAYS, 4))
-    if net is True:
+    if reset is True:
         counter = 0
         screen.fill(BGCOLOR)
         for i in range(RAYS):
@@ -110,12 +113,8 @@ def render(rayMatrix, net):
             angle = 2 * np.pi * (i / RAYS)
             vect = pygame.Vector2(np.cos(angle), np.sin(angle))
             startPos = mousePos
-
             if i < RAYS:
-                try:
-                    output[i : i + 1] = [startPos[0], startPos[1], vect[0], vect[1]]
-                except ValueError:
-                    print(startPos, vect)
+                output[i : i + 1] = [startPos[0], startPos[1], vect[0], vect[1]]
             else:
                 output[i] = [startPos[0], startPos[1], vect[0], vect[1]]
 
@@ -123,18 +122,23 @@ def render(rayMatrix, net):
         for mirror in mirrors:
             mirror.draw("white", screen)
 
-    temp = distributor(rayMatrix)
+        newMatrix = distributor(rayMatrix)
 
-    color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
-    for i in range(RAYS):
-        data = temp[i]
-        pygame.draw.line(screen, color, (data[0], data[1]), (data[2], data[3]))
-        output[i] = [data[2], data[3], data[4], data[5]]
+        for i in range(RAYS):
+            startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
+                newMatrix[i]
+            )
+            pygame.draw.line(
+                screen, color, (startPos_x, startPos_y), (intersect_x, intersect_y)
+            )
+            output[i] = [intersect_x, intersect_y, vector_x, vector_y]
 
-    display.blit(screen, (0, 0))
+        display.blit(screen, (0, 0))
     pygame.display.flip()
     counter += 1
+    frame_counter += 1
     return output
 
 
@@ -147,7 +151,7 @@ def distributor(rayMatrix):
             output[i] = out
         except ValueError:
             errors += 1
-    print(f"error count for frame: {errors}")
+    print(f"error count for frame no ({frame_counter}): {errors}") if errors > 0 else None
     return output
 
 
@@ -155,14 +159,14 @@ def generateMirrors(PATH):
     global mirrors
 
     # read image with cv2, nize it to fit display
-    img = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
-    
+    img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
+    img = cv2.resize(img_temp, (screenx, screeny))
 
     _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        accuracy = 0.03 * cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 1, True)
+        # accuracy = 0.03 * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, 5, True)
         n = approx.ravel()
 
     mirrors.append(Mirror((0, 0), (screenx, 0)))
@@ -181,7 +185,7 @@ def generateMirrors(PATH):
 
 
 generateMirrors(PATH)
-
+print(len(mirrors))
 
 def main():
     global mousePos
