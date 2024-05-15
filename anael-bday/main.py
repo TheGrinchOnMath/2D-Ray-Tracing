@@ -38,9 +38,20 @@ def pathFiddler(dir: list):
         nult += char
     return nult
 
-
 PATH = pathFiddler(ASSETSPATH)
 
+def cv2EdgeFind(path):
+    # read image with cv2, nize it to fit display
+    img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
+    img = cv2.resize(img_temp, (screenx, screeny))
+
+    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours:
+        # accuracy = 0.03 * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, 1, True)
+        n = approx.ravel()
+    return n
 
 class Mirror:
     # this variable is the thickness of the ray when drawn
@@ -100,11 +111,8 @@ def rayPhysicsHandler(rayArr):
 
     if closest is not None:
         pygame.draw.circle(screen, "green", closest, 10)
-        vect_unit = vect.normalize()
-        newVector = vect_unit.reflect(normal)
-        print(vect_unit, newVector.normalize())
-        pygame.draw.line(screen, "yellow", closest, closest + newVector.normalize() * 100, 5)
-
+        newVector = vect.reflect(normal)
+        pygame.draw.line(screen, "lime", closest, closest + newVector.normalize() * 50, 8)
         output = [
             startPos[0],
             startPos[1],
@@ -175,16 +183,7 @@ def distributor(rayMatrix):
 def generateMirrors(PATH):
     global mirrors
 
-    # read image with cv2, nize it to fit display
-    img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
-    img = cv2.resize(img_temp, (screenx, screeny))
-
-    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    for cnt in contours:
-        # accuracy = 0.03 * cv2.arcLength(cnt, True)
-        approx = cv2.approxPolyDP(cnt, 1, True)
-        n = approx.ravel()
+    n = cv2EdgeFind(PATH)
 
     mirrors.append(Mirror((0, 0), (screenx, 0)))
     mirrors.append(Mirror((0, 0), (0, screeny)))
