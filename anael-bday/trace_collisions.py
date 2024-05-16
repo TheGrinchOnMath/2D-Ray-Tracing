@@ -5,8 +5,8 @@ import pygame
 import os
 import numpy as np
 
-RAYS = 1000
-REFLECT_CAP = 50
+RAYS = 1
+REFLECT_CAP = 10
 CWD = os.getcwd()
 ASSETSPATH = ["anael-bday", "assets"]
 IMAGE = "penrose_unilluminable_room.png"
@@ -38,11 +38,9 @@ def pathFiddler(dir: list):
         nult += char
     return nult
 
-
 PATH = pathFiddler(ASSETSPATH)
 
-
-def cv2EdgeFind(PATH):
+def cv2EdgeFind(path):
     # read image with cv2, nize it to fit display
     img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
     img = cv2.resize(img_temp, (screenx, screeny))
@@ -50,12 +48,10 @@ def cv2EdgeFind(PATH):
     _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        accuracy = 0.03 * cv2.arcLength(cnt, True)
-        print(accuracy)
-        approx = cv2.approxPolyDP(cnt, 0.5, True)
+        # accuracy = 0.03 * cv2.arcLength(cnt, True)
+        approx = cv2.approxPolyDP(cnt, 1, True)
         n = approx.ravel()
     return n
-
 
 class Mirror:
     # this variable is the thickness of the ray when drawn
@@ -102,6 +98,8 @@ def rayPhysicsHandler(rayArr):
     for mirror in mirrors:
         result = mirror.intersect(startPos, vect)
         if result is not None:
+            # remove later, mostly for debug purposes
+            pygame.draw.circle(screen, "red", result, 5)
             collision = result
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
@@ -112,6 +110,7 @@ def rayPhysicsHandler(rayArr):
                 normal = mirror.normVect
 
     if closest is not None:
+        pygame.draw.circle(screen, "green", closest, 10)
         newVector = vect.reflect(normal)
         output = [
             startPos[0],

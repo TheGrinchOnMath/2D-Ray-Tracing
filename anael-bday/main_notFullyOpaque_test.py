@@ -1,12 +1,12 @@
 import cv2
-import random
+#import random
 import sys
 import pygame
 import os
 import numpy as np
 
-RAYS = 1000
-REFLECT_CAP = 50
+RAYS = 10000
+REFLECT_CAP = 100
 CWD = os.getcwd()
 ASSETSPATH = ["anael-bday", "assets"]
 IMAGE = "penrose_unilluminable_room.png"
@@ -19,6 +19,8 @@ pygame.init()
 display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
 screenx, screeny = display.get_size()
 screen = pygame.Surface((screenx, screeny))
+mirror_screen = screen
+screen.set_alpha(100)
 mousePos = (screenx / 2, screeny / 2)
 
 
@@ -60,6 +62,7 @@ def cv2EdgeFind(PATH):
 class Mirror:
     # this variable is the thickness of the ray when drawn
     size = 3
+    display.fill(BGCOLOR)
 
     def __init__(self, startPos: tuple, endPos: tuple):
         self.startPos = startPos
@@ -106,7 +109,7 @@ def rayPhysicsHandler(rayArr):
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
             )
-            if dist < mark and dist > 0.01:
+            if dist < mark and dist > 0.001:
                 mark = dist
                 closest = collision
                 normal = mirror.normVect
@@ -130,6 +133,8 @@ def render(rayMatrix, reset):
     if reset is True:
         counter = 0
         screen.fill(BGCOLOR)
+        display.fill(BGCOLOR)
+        mirror_screen.fill(BGCOLOR)
         for i in range(RAYS):
             # find angle in radians using fraction of 2pi
             angle = 2 * np.pi * (i / RAYS)
@@ -142,22 +147,23 @@ def render(rayMatrix, reset):
 
     else:
         for mirror in mirrors:
-            mirror.draw("white", screen)
+            mirror.draw("white", mirror_screen)
 
         newMatrix = distributor(rayMatrix)
 
-        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         for i in range(RAYS):
             startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
                 newMatrix[i]
             )
             pygame.draw.line(
-                screen, color, (startPos_x, startPos_y), (intersect_x, intersect_y)
+                screen, (200, 200, 0), (startPos_x, startPos_y), (intersect_x, intersect_y)
             )
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
 
         display.blit(screen, (0, 0))
+        display.blit(mirror_screen, (0, 0))
     pygame.display.flip()
     counter += 1
     frame_counter += 1

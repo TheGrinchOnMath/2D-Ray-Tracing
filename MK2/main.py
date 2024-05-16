@@ -1,24 +1,31 @@
 import cv2
-import random
+#import random
 import sys
 import pygame
 import os
+import time
 import numpy as np
+from concurrent.futures import ProcessPoolExecutor
 
-RAYS = 1000
-REFLECT_CAP = 50
+CORE_COUNT = os.cpu_count()
+
+RAYS = 500
+REFLECT_CAP = 1000
 CWD = os.getcwd()
-ASSETSPATH = ["anael-bday", "assets"]
-IMAGE = "penrose_unilluminable_room.png"
+ASSETSPATH = ["MK2", "assets"]
+IMAGE = "Tokarsky_unilluminable_room.png"
 BGCOLOR = (10, 10, 10)
 ASSETSPATH.append(IMAGE)
 mirrors = []
 frame_counter = 0
 
+
 pygame.init()
 display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
 screenx, screeny = display.get_size()
 screen = pygame.Surface((screenx, screeny))
+mirror_screen = screen
+screen.set_alpha(100)
 mousePos = (screenx / 2, screeny / 2)
 
 
@@ -50,9 +57,7 @@ def cv2EdgeFind(PATH):
     _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
     contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
     for cnt in contours:
-        accuracy = 0.03 * cv2.arcLength(cnt, True)
-        print(accuracy)
-        approx = cv2.approxPolyDP(cnt, 0.5, True)
+        approx = cv2.approxPolyDP(cnt, 1, True)
         n = approx.ravel()
     return n
 
@@ -60,6 +65,7 @@ def cv2EdgeFind(PATH):
 class Mirror:
     # this variable is the thickness of the ray when drawn
     size = 3
+    display.fill(BGCOLOR)
 
     def __init__(self, startPos: tuple, endPos: tuple):
         self.startPos = startPos
@@ -106,7 +112,7 @@ def rayPhysicsHandler(rayArr):
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
             )
-            if dist < mark and dist > 0.01:
+            if dist < mark and dist > 0.001:
                 mark = dist
                 closest = collision
                 normal = mirror.normVect
@@ -129,7 +135,8 @@ def render(rayMatrix, reset):
     output = np.empty((RAYS, 4))
     if reset is True:
         counter = 0
-        screen.fill(BGCOLOR)
+        display.fill(BGCOLOR)
+        mirror_screen.fill(BGCOLOR)
         for i in range(RAYS):
             # find angle in radians using fraction of 2pi
             angle = 2 * np.pi * (i / RAYS)
@@ -142,21 +149,22 @@ def render(rayMatrix, reset):
 
     else:
         for mirror in mirrors:
-            mirror.draw("white", screen)
+            mirror.draw("white", mirror_screen)
 
         newMatrix = distributor(rayMatrix)
 
-        color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
+        # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
         for i in range(RAYS):
             startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
                 newMatrix[i]
             )
             pygame.draw.line(
-                screen, color, (startPos_x, startPos_y), (intersect_x, intersect_y)
+                screen, (220, 215, 75), (startPos_x, startPos_y), (intersect_x, intersect_y)
             )
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
 
+        display.blit(mirror_screen, (0, 0))
         display.blit(screen, (0, 0))
     pygame.display.flip()
     counter += 1
@@ -167,12 +175,23 @@ def render(rayMatrix, reset):
 def distributor(rayMatrix):
     output = np.empty((RAYS, 6))
     errors = 0
+
+    with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
+        _out = executor.map(rayPhysicsHandler, rayMatrix)
+    
+    for i in enumerate(_out):
+        try:
+            output[i[0]] = i[1]
+        except ValueError:
+            errors += 1
+    """
     for i in range(RAYS):
         out = rayPhysicsHandler(rayMatrix[i])
         try:
             output[i] = out
         except ValueError:
             errors += 1
+            """
     print(
         f"error count for frame no ({frame_counter}): {errors}"
     ) if errors > 0 else None
@@ -200,11 +219,12 @@ def generateMirrors(PATH):
 
 
 generateMirrors(PATH)
-print(len(mirrors))
+print(f"mirror count: {len(mirrors)}")
 
 
 def main():
     global mousePos
+    time_current = time.perf_counter()
     rayMatrix = render(np.empty((RAYS, 4)), True)
 
     quit = False
@@ -221,6 +241,9 @@ def main():
                     rayMatrix = render(np.empty((RAYS, 4)), True)
         if counter <= REFLECT_CAP:
             rayMatrix = render(rayMatrix, False)
+        time_new = time.perf_counter()
+        print(f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds")
+        time_current = time_new
 
     sys.exit()
 
