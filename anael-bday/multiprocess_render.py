@@ -10,10 +10,10 @@ from concurrent.futures import ProcessPoolExecutor
 CORE_COUNT = os.cpu_count()
 
 RAYS = 500
-REFLECT_CAP = 1000
+REFLECT_CAP = 10000
 CWD = os.getcwd()
 ASSETSPATH = ["anael-bday", "assets"]
-IMAGE = "Tokarsky_unilluminable_room.png"
+IMAGE = "penrose_unilluminable_room.png"
 BGCOLOR = (10, 10, 10)
 ASSETSPATH.append(IMAGE)
 mirrors = []
@@ -26,6 +26,7 @@ screenx, screeny = display.get_size()
 screen = pygame.Surface((screenx, screeny))
 mirror_screen = screen
 screen.set_alpha(100)
+mirror_screen.set_alpha(255)
 mousePos = (screenx / 2, screeny / 2)
 
 
@@ -112,7 +113,7 @@ def rayPhysicsHandler(rayArr):
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
             )
-            if dist < mark and dist > 0.001:
+            if dist < mark and dist > 0.0000001:
                 mark = dist
                 closest = collision
                 normal = mirror.normVect
@@ -160,12 +161,13 @@ def render(rayMatrix, reset):
                 newMatrix[i]
             )
             pygame.draw.line(
-                screen, (220, 215, 75), (startPos_x, startPos_y), (intersect_x, intersect_y)
+                screen, (230, 220, 60), (startPos_x, startPos_y), (intersect_x, intersect_y)
             )
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
 
         display.blit(mirror_screen, (0, 0))
         display.blit(screen, (0, 0))
+    pygame.draw.circle(display, "orange", mousePos, 5)
     pygame.display.flip()
     counter += 1
     frame_counter += 1
