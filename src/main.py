@@ -11,13 +11,14 @@ CORE_COUNT = os.cpu_count()
 pg.init()
 display = pg.display.set_mode((0, 0), pg.HWSURFACE | pg.FULLSCREEN)
 screenx, screeny = display.get_size()
-screen = pg.Surface((screenx, screeny))
+screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
 RAYS = 100
-REFLECTIONS = 2
+REFLECTIONS = 10
 frame_counter = 0
+
 
 class Mirror:
     def __init__(self, type, **kwargs):
@@ -57,7 +58,6 @@ class Mirror:
             a, b = self.eccentricity
             c1, c2 = self.center
             o1, o2 = (p1 - c1, p2 - c2)
-            
 
             ## try except is to attempt to catch errors without crashing the code
             try:
@@ -74,6 +74,7 @@ class Mirror:
             except TypeError:
                 print(q3)
             # add more checks here when using elliptic arcs
+            # bug: when ray origin is inside ellipse, rays escape. when ray origin is outside ellipse, all fine
             if m1 > 0 and m2 < 0:
                 x = o1 + c1 + m1 * v1
                 y = o2 + c2 + m1 * v2
@@ -91,7 +92,6 @@ class Mirror:
                 collidepos = (x, y)
                 pg.draw.circle(screen, "blue", (x, y), 3)
                 return collidepos
-            
 
     def draw(self, color, screen):
         if self.type == "line":
@@ -111,7 +111,6 @@ class Mirror:
                 2 * (intersect[1] - self.center[1]) / (self.eccentricity[1] ** 2),
             )
             return vect
-
 
 
 def rayPhysicsHandler(matrix):
@@ -151,10 +150,10 @@ def rayPhysicsHandler(matrix):
 def distributor(rayMatrix):
     output = np.empty((RAYS, 6))
     errors = 0
-    
+
     with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
         _out = executor.map(rayPhysicsHandler, rayMatrix)
-    
+
     for i in enumerate(_out):
         try:
             output[i[0]] = i[1]
@@ -205,7 +204,7 @@ def render(rayMatrix, reset):
             )
             pg.draw.line(
                 screen,
-                (50, 50, 0),
+                (255, 255, 0, 50),
                 (startPos_x, startPos_y),
                 (intersect_x, intersect_y),
             )
@@ -254,13 +253,13 @@ def main():
                     rayMatrix = render(np.empty((RAYS, 4)), True)
         if counter <= REFLECTIONS:
             rayMatrix = render(rayMatrix, False)
-    
+
         time_new = time.perf_counter()
         print(
             f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
         )
         time_current = time_new
-    
+
     sys.exit()
 
 
