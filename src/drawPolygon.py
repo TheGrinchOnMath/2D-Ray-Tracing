@@ -9,24 +9,24 @@ from concurrent.futures import ProcessPoolExecutor
 
 CORE_COUNT = os.cpu_count()
 
-RAYS = 500
-REFLECT_CAP = 10000
+RAYS = 1000
+REFLECT_CAP = 1 # fixed, to simulate light stopping at walls
 CWD = os.getcwd()
-ASSETSPATH = ["anael-bday", "assets"]
+ASSETSPATH = ["assets"]
 IMAGE = "penrose_unilluminable_room.png"
 BGCOLOR = (10, 10, 10)
 ASSETSPATH.append(IMAGE)
 mirrors = []
 frame_counter = 0
 
+RAY_COLOR = (255, 255, 100)
+
 
 pygame.init()
 display = pygame.display.set_mode((0, 0), pygame.HWSURFACE | pygame.FULLSCREEN)
 screenx, screeny = display.get_size()
 screen = pygame.Surface((screenx, screeny))
-mirror_screen = screen
-screen.set_alpha(100)
-mirror_screen.set_alpha(255)
+mirror_screen = pygame.Surface((screenx, screeny))
 mousePos = (screenx / 2, screeny / 2)
 
 
@@ -150,23 +150,25 @@ def render(rayMatrix, reset):
 
     else:
         for mirror in mirrors:
-            mirror.draw("white", mirror_screen)
+            mirror.draw("white", screen)
 
         newMatrix = distributor(rayMatrix)
 
         # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
+        li = []
         for i in range(RAYS):
             startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
                 newMatrix[i]
             )
-            pygame.draw.line(
-                screen, (230, 220, 60), (startPos_x, startPos_y), (intersect_x, intersect_y)
-            )
+            li.append((intersect_x, intersect_y))
+            #pygame.draw.line(screen, RAY_COLOR, (startPos_x, startPos_y), (intersect_x, intersect_y))
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
 
-        display.blit(mirror_screen, (0, 0))
+        pygame.draw.polygon(screen, RAY_COLOR, li)
+
         display.blit(screen, (0, 0))
+
+
     pygame.draw.circle(display, "orange", mousePos, 5)
     pygame.display.flip()
     counter += 1
