@@ -2,6 +2,11 @@ import pygame as pg
 import numpy as np
 import time
 import sys
+import os
+from concurrent.futures import ProcessPoolExecutor
+
+CORE_COUNT = os.cpu_count()
+
 
 pg.init()
 display = pg.display.set_mode((0, 0), pg.HWSURFACE | pg.FULLSCREEN)
@@ -52,14 +57,16 @@ class Mirror:
             a, b = self.eccentricity
             c1, c2 = self.center
             o1, o2 = (p1 - c1, p2 - c2)
+            
 
             ## try except is to attempt to catch errors without crashing the code
             try:
-                q1 = (a * v2) ** 2 + (b * v1) ** 2
-                if q1 < (v1 * o2 - v2 * o1) ** 2:
+                q1 = pow(a * v2, 2) + pow(b * v1, 2)
+                q4 = pow(v1 * o2 - v2 * o1, 2)
+                if q1 < q4:
                     return None
                 else:
-                    q3 = np.sqrt(q1 - (v1 * o2 - v2 * o1) ** 2)
+                    q3 = np.sqrt(q1 - q4)
                     m1 = (-(a * a * v2 * o2) - (b * b * v1 * o1) + a * b * q3) / q1
                     m2 = (-(a * a * v2 * o2) - (b * b * v1 * o1) - a * b * q3) / q1
             except ZeroDivisionError:
@@ -71,30 +78,20 @@ class Mirror:
                 x = o1 + c1 + m1 * v1
                 y = o2 + c2 + m1 * v2
                 collidepos_1 = (x, y)
-                pg.draw.circle(screen, "green", (x, y), 3)
                 return collidepos_1
             elif m2 > 0 and m1 < 0:
                 x = o1 + c1 + m2 * v1
                 y = o2 + c2 + m2 * v2
                 collidepos_2 = (x, y)
-                pg.draw.circle(screen, "green", (x, y), 3)
                 print(m1, m2)
                 return collidepos_2
             elif m1 > 0 and m2 > 0:
-                if m1 < m2:
-                    x = o1 + c1 + m1 * v1
-                    y = o2 + c2 + m1 * v2
-                    collidepos_1 = (x, y)
-                    pg.draw.circle(screen, "red", (x, y), 3)
-                    return collidepos_1
-                elif m2 < m1:
-                    x = o1 + c1 + m2 * v1
-                    y = o2 + c2 + m2 * v2
-                    collidepos_2 = (x, y)
-                    pg.draw.circle(screen, "blue", (x, y), 3)
-                    return collidepos_2
-                else:
-                    return None
+                x = o1 + c1 + m2 * v1
+                y = o2 + c2 + m2 * v2
+                collidepos = (x, y)
+                pg.draw.circle(screen, "blue", (x, y), 3)
+                return collidepos
+            
 
     def draw(self, color, screen):
         if self.type == "line":
@@ -154,7 +151,7 @@ def rayPhysicsHandler(matrix):
 def distributor(rayMatrix):
     output = np.empty((RAYS, 6))
     errors = 0
-    """
+    
     with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
         _out = executor.map(rayPhysicsHandler, rayMatrix)
     
@@ -170,7 +167,7 @@ def distributor(rayMatrix):
             output[i] = out
         except ValueError:
             errors += 1
-
+    """
     print(
         f"error count for frame no ({frame_counter}): {errors}"
     ) if errors > 0 else None
@@ -208,7 +205,7 @@ def render(rayMatrix, reset):
             )
             pg.draw.line(
                 screen,
-                (230, 220, 60),
+                (50, 50, 0),
                 (startPos_x, startPos_y),
                 (intersect_x, intersect_y),
             )
@@ -257,13 +254,13 @@ def main():
                     rayMatrix = render(np.empty((RAYS, 4)), True)
         if counter <= REFLECTIONS:
             rayMatrix = render(rayMatrix, False)
-    """
+    
         time_new = time.perf_counter()
         print(
             f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
         )
         time_current = time_new
-    """
+    
     sys.exit()
 
 
