@@ -11,7 +11,7 @@ screen = pg.Surface((screenx, screeny))
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
-RAYS = 1000
+RAYS = 100
 REFLECTIONS = 1
 frame_counter = 0
 
@@ -58,18 +58,16 @@ class Mirror:
             ## try except is to attempt to catch errors without crashing the code
             try:
                 q1 = (a * v2) ** 2 + (b * v1) ** 2
-                q2 = -(a * a * v2 * o2) - (b * b * v1 * o1)
                 if q1 < (v1 * o2 - v2 * o1) ** 2:
                     return None
                 else:
                     q3 = np.sqrt(q1 - (v1 * o2 - v2 * o1) ** 2)
-                    m1 = (q2 + a * b * q3) / q1
-                    m2 = (q2 - a * b * q3) / q1
+                    m1 = (-(a * a * v2 * o2) - (b * b * v1 * o1) + a * b * q3) / q1
+                    m2 = (-(a * a * v2 * o2) - (b * b * v1 * o1) - a * b * q3) / q1
             except ZeroDivisionError:
                 print(q1)
             except TypeError:
                 print(q3)
-
             # add more checks here when using elliptic arcs
             if m1 > 0 and m2 < 0:
                 x = o1 + c1 + m1 * v1
@@ -77,25 +75,25 @@ class Mirror:
                 collidepos_1 = (x, y)
                 pg.draw.circle(screen, "green", (x, y), 3)
                 return collidepos_1
-            elif m2 < 0 and m1 < 0:
+            elif m2 > 0 and m1 < 0:
                 x = o1 + c1 + m2 * v1
                 y = o2 + c2 + m2 * v2
                 collidepos_2 = (x, y)
                 pg.draw.circle(screen, "green", (x, y), 3)
+                print(m1, m2)
                 return collidepos_2
-
             elif m1 > 0 and m2 > 0:
-                if m1 < m2 and m1 > 0:
+                if m1 < m2:
                     x = o1 + c1 + m1 * v1
                     y = o2 + c2 + m1 * v2
                     collidepos_1 = (x, y)
-                    pg.draw.circle(screen, "green", (x, y), 3)
+                    pg.draw.circle(screen, "red", (x, y), 3)
                     return collidepos_1
-                elif m2 < m1 and m2 > 0:
+                elif m2 < m1:
                     x = o1 + c1 + m2 * v1
                     y = o2 + c2 + m2 * v2
                     collidepos_2 = (x, y)
-                    pg.draw.circle(screen, "green", (x, y), 3)
+                    pg.draw.circle(screen, "blue", (x, y), 3)
                     return collidepos_2
                 else:
                     return None
@@ -133,7 +131,7 @@ def rayPhysicsHandler(matrix):
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
             )
-            if dist < mark and dist > 0.0000001:
+            if dist < mark and dist > 10**-10:
                 mark = dist
                 closest = collision
                 normal = mirror.normal(closest)
