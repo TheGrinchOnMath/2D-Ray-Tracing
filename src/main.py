@@ -1,6 +1,5 @@
 import pygame as pg
 import numpy as np
-import os
 import time
 import sys
 
@@ -12,9 +11,8 @@ mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
 RAYS = 100
-REFLECTIONS = 1
+REFLECTIONS = 2
 frame_counter = 0
-
 
 class Mirror:
     def __init__(self, type, **kwargs):
@@ -109,11 +107,14 @@ class Mirror:
             return pg.Vector2(
                 self.endPos[1] - self.startPos[1], self.startPos[0] - self.endPos[0]
             )
-        elif self.type == "ellipse":
-            return pg.Vector2(
-                intersect[0] / (self.eccentricity[0] ** 2),
-                intersect[1] / (self.eccentricity[1] ** 2),
+        if self.type == "ellipse":
+            # the key here is to adjust the intersections for an ellipse placed at origin
+            vect = pg.Vector2(
+                2 * (intersect[0] - self.center[0]) / (self.eccentricity[0] ** 2),
+                2 * (intersect[1] - self.center[1]) / (self.eccentricity[1] ** 2),
             )
+            return vect
+
 
 
 def rayPhysicsHandler(matrix):
@@ -131,13 +132,14 @@ def rayPhysicsHandler(matrix):
             dist = np.sqrt(
                 (startPos[0] - collision[0]) ** 2 + (startPos[1] - collision[1]) ** 2
             )
-            if dist < mark and dist > 10**-10:
+            if dist < mark and dist > 10**-6:
                 mark = dist
                 closest = collision
-                normal = mirror.normal(closest)
+                normal = mirror.normal(result)
 
     if closest is not None:
         newVector = vect.reflect(normal)
+        # pg.draw.line(screen, (100, 100, 255), closest, closest + normal.normalize() * 50, 2)
         output = [
             startPos[0],
             startPos[1],
@@ -179,10 +181,10 @@ def render(rayMatrix, reset):
     global counter, frame_counter
 
     BGCOLOR = (10, 10, 10)
-    screen.fill(BGCOLOR)
     output = np.empty((RAYS, 4))
     if reset is True:
         counter = 0
+        screen.fill(BGCOLOR)
         for i in range(RAYS):
             # find angle in radians using fraction of 2pi
             angle = 2 * np.pi * (i / RAYS)
@@ -255,15 +257,13 @@ def main():
                     rayMatrix = render(np.empty((RAYS, 4)), True)
         if counter <= REFLECTIONS:
             rayMatrix = render(rayMatrix, False)
-
-        
-            time_new = time.perf_counter()
-            print(
-                f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
-            )
-            time_current = time_new
-            
-
+    """
+        time_new = time.perf_counter()
+        print(
+            f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
+        )
+        time_current = time_new
+    """
     sys.exit()
 
 
