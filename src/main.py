@@ -15,11 +15,11 @@ screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
-RAYS = 1000
+RAYS = 25000
 REFLECTIONS = 10
-RAY_COLOR = (255, 255, 50, 100)
+RAY_COLOR = (255, 255, 50, 5)
 frame_counter = 0
-check_count = 0
+# this variable is to avoid inaccuracy errors
 prec = 10**-10
 
 
@@ -79,30 +79,13 @@ class Mirror:
                 print(q3)
             # add more checks here when using elliptic arcs
             # bug: when ray origin is inside ellipse, rays escape. when ray origin is outside ellipse, all fine
-            if m2>=m1>=0:
-                print(m1, " < ", m2)
-                check_count += 1
-            elif m1>=m2>=0:
-                print(m1, " > ", m2)
-                check_count += 1
-            elif m1==m2!=0:
-                print(m1, " = ", m2)
-                check_count += 1
-                
+
             if m1 > prec and m2 < prec:
                 x = o1 + c1 + m1 * v1
                 y = o2 + c2 + m1 * v2
                 collidepos_1 = (x, y)
                 return collidepos_1
-            # could implement search with small steps to compare when steps find something and intersect finds none
-            elif m2 > prec and m1 < prec:
-                x = o1 + c1 + m2 * v1
-                y = o2 + c2 + m2 * v2
-                collidepos_2 = (x, y)
-                print(m1, m2)
-                return collidepos_2
-
-            elif m1 > prec and m2 > prec:
+            else:
                 # this works since m2 is smaller than m1. this logic covers
                 # the case where the origin is outside the ellipse.
                 x = o1 + c1 + m2 * v1
@@ -113,9 +96,26 @@ class Mirror:
 
     def draw(self, color, screen):
         if self.type == "line":
-            pg.draw.line(screen, color, self.startPos, self.endPos, self.size)
+            pg.draw.aaline(screen, color, self.startPos, self.endPos, self.size)
+
         elif self.type == "ellipse":
-            pass
+            pg.draw.circle(
+                screen,
+                "white",
+                (
+                    self.center[0] + (self.eccentricity[0] + self.eccentricity[1]) / 2,
+                    self.center[1],
+                ),
+                7,
+            )
+            topleft = pg.Vector2(self.center) - pg.Vector2(self.eccentricity)
+            rect = pg.Rect(
+                topleft[0],
+                topleft[1],
+                2 * self.eccentricity[0],
+                2 * self.eccentricity[1],
+            )
+            pg.draw.ellipse(screen, color, rect, 5)
 
     def normal(self, intersect):
         if self.type == "line":
@@ -165,26 +165,26 @@ def rayPhysicsHandler(matrix):
     return output
 
 
-def distributor(rayMatrix):
+def distributor(option, rayMatrix):
     output = np.empty((RAYS, 6))
     errors = 0
-    """
-    with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
-        _out = executor.map(rayPhysicsHandler, rayMatrix)
+    if option:
+        with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
+            _out = executor.map(rayPhysicsHandler, rayMatrix)
 
-    for i in enumerate(_out):
-        try:
-            output[i[0]] = i[1]
-        except ValueError:
-            errors += 1
-    """
-    for i in range(RAYS):
-        out = rayPhysicsHandler(rayMatrix[i])
+        for i in enumerate(_out):
+            try:
+                output[i[0]] = i[1]
+            except ValueError:
+                errors += 1
+    else:
+        for i in range(RAYS):
+            out = rayPhysicsHandler(rayMatrix[i])
         try:
             output[i] = out
         except ValueError:
             errors += 1
-    
+
     print(
         f"error count for frame no ({frame_counter}): {errors}"
     ) if errors > 0 else None
@@ -193,12 +193,9 @@ def distributor(rayMatrix):
 
 def render(rayMatrix, reset):
     global counter, frame_counter
-    temp_surf = screen.copy()
     BGCOLOR = (10, 10, 10)
     output = np.empty((RAYS, 4))
-    print(check_count)
     if reset is True:
-        print(f"Frame {frame_counter}: \n")
         counter = 0
         screen.fill(BGCOLOR)
         for i in range(RAYS):
@@ -212,10 +209,9 @@ def render(rayMatrix, reset):
                 output[i] = [startPos[0], startPos[1], vect[0], vect[1]]
 
     else:
-        print(f"Frame {frame_counter}: \n")
         for mirror in mirrors:
             mirror.draw("white", screen)
-        newMatrix = distributor(rayMatrix)
+        newMatrix = distributor(True, rayMatrix)
 
         # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
 
@@ -223,14 +219,14 @@ def render(rayMatrix, reset):
             startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
                 newMatrix[i]
             )
-            pg.draw.line(
+            pg.draw.aaline(
                 screen,
                 RAY_COLOR,
                 (startPos_x, startPos_y),
                 (intersect_x, intersect_y),
-            )
+            1)
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
-        display.blit(temp_surf, (0, 0))
+
         display.blit(screen, (0, 0))
     pg.draw.circle(display, "orange", mousePos, 5)
     pg.display.flip()
@@ -250,7 +246,7 @@ def generateMirrors():
         Mirror(
             "ellipse",
             center=(screenx / 2, screeny / 2),
-            offset=(screenx / 3, screeny / 3),
+            offset=(screenx * 3 / 7, screeny * 2 / 5),
         )
     )
 
@@ -276,9 +272,9 @@ def main():
             rayMatrix = render(rayMatrix, False)
 
         time_new = time.perf_counter()
-        #print(
+        # print(
         #    f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
-        #)
+        # )
         time_current = time_new
 
     sys.exit()
