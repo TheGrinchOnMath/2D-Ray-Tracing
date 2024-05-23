@@ -12,7 +12,7 @@ CORE_COUNT = os.cpu_count()
 RAYS = 500
 REFLECT_CAP = 10000
 CWD = os.getcwd()
-ASSETSPATH = ["anael-bday", "assets"]
+ASSETSPATH = ["assets"]
 IMAGE = "penrose_unilluminable_room.png"
 BGCOLOR = (10, 10, 10)
 ASSETSPATH.append(IMAGE)
