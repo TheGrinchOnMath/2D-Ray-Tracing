@@ -7,6 +7,8 @@ from concurrent.futures import ProcessPoolExecutor
 
 CORE_COUNT = os.cpu_count()
 
+def clear():
+    os.system('cls' if os.name=='nt' else 'clear')
 
 pg.init()
 display = pg.display.set_mode((0, 0), pg.HWSURFACE | pg.FULLSCREEN)
@@ -15,9 +17,9 @@ screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
-RAYS = 25000
-REFLECTIONS = 10
-RAY_COLOR = (255, 255, 50, 5)
+RAYS = 250
+REFLECTIONS = 100
+RAY_COLOR = (255, 255, 50, 2)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
 prec = 10**-10
@@ -191,13 +193,15 @@ def distributor(option, rayMatrix):
     return output
 
 
-def render(rayMatrix, reset):
+def render(rayMatrix, reset, layers):
     global counter, frame_counter
     BGCOLOR = (10, 10, 10)
     output = np.empty((RAYS, 4))
     if reset is True:
+        clear()
         counter = 0
         screen.fill(BGCOLOR)
+        layers.fill(BGCOLOR)
         for i in range(RAYS):
             # find angle in radians using fraction of 2pi
             angle = 2 * np.pi * (i / RAYS)
@@ -211,10 +215,12 @@ def render(rayMatrix, reset):
     else:
         for mirror in mirrors:
             mirror.draw("white", screen)
+        print(f"calculating intersections for {RAYS} rays...")
         newMatrix = distributor(True, rayMatrix)
+        print("done!")
 
         # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
-
+        print(f"rendering set {counter}...")
         for i in range(RAYS):
             startPos_x, startPos_y, intersect_x, intersect_y, vector_x, vector_y = (
                 newMatrix[i]
@@ -224,10 +230,14 @@ def render(rayMatrix, reset):
                 RAY_COLOR,
                 (startPos_x, startPos_y),
                 (intersect_x, intersect_y),
-            1)
+                1,
+            )
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
+        layers.blit(screen, (0, 0))
 
-        display.blit(screen, (0, 0))
+        display.blit(layers, (0, 0))
+
+        print("done!\n")
     pg.draw.circle(display, "orange", mousePos, 5)
     pg.display.flip()
     counter += 1
@@ -253,9 +263,10 @@ def generateMirrors():
 
 def main():
     global mousePos
+    layers = screen.copy()
     generateMirrors()
     time_current = time.perf_counter()
-    rayMatrix = render(np.empty((RAYS, 4)), True)
+    rayMatrix = render(np.empty((RAYS, 4)), True, layers)
     quit = False
     while not quit:
         for event in pg.event.get():
@@ -267,9 +278,9 @@ def main():
 
                 if event.key == pg.K_SPACE:
                     mousePos = pg.mouse.get_pos()
-                    rayMatrix = render(np.empty((RAYS, 4)), True)
+                    rayMatrix = render(np.empty((RAYS, 4)), True, layers)
         if counter <= REFLECTIONS:
-            rayMatrix = render(rayMatrix, False)
+            rayMatrix = render(rayMatrix, False, layers)
 
         time_new = time.perf_counter()
         # print(
