@@ -7,8 +7,10 @@ from concurrent.futures import ProcessPoolExecutor
 
 CORE_COUNT = os.cpu_count()
 
+
 def clear():
-    os.system('cls' if os.name=='nt' else 'clear')
+    os.system("cls" if os.name == "nt" else "clear")
+
 
 pg.init()
 display = pg.display.set_mode((0, 0), pg.HWSURFACE | pg.FULLSCREEN)
@@ -18,7 +20,7 @@ mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
 RAYS = 250
-REFLECTIONS = 100
+REFLECTIONS = 50
 RAY_COLOR = (255, 255, 50, 2)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
@@ -87,7 +89,15 @@ class Mirror:
                 y = o2 + c2 + m1 * v2
                 collidepos_1 = (x, y)
                 return collidepos_1
-            else:
+            # could implement search with small steps to compare when steps find something and intersect finds none
+            elif m2 > prec and m1 < prec:
+                x = o1 + c1 + m2 * v1
+                y = o2 + c2 + m2 * v2
+                collidepos_2 = (x, y)
+                print(m1, m2)
+                return collidepos_2
+
+            elif m1 > prec and m2 > prec:
                 # this works since m2 is smaller than m1. this logic covers
                 # the case where the origin is outside the ellipse.
                 x = o1 + c1 + m2 * v1
@@ -247,11 +257,22 @@ def render(rayMatrix, reset, layers):
 
 def generateMirrors():
     global mirrors
+    LineMirrorCoords = [
+        [(0, 0), (screenx, 0)],
+        [(0, 0), (0, screeny)],
+        [(screenx, 0), (screenx, screeny)],
+        [(0, screeny), (screenx, screeny)]
+    ]
+    """
+        [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 2 / 5)],
+        [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 2 / 5, screeny * 3 / 5)],
+        [(screenx * 3 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
+        [(screenx * 2 / 5, screeny * 3 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
+    """,
+    
+    for li in LineMirrorCoords:
+        mirrors.append(Mirror("line", startpos=li[0], endpos=li[1]))
 
-    mirrors.append(Mirror("line", startpos=(0, 0), endpos=(screenx, 0)))
-    mirrors.append(Mirror("line", startpos=(0, 0), endpos=(0, screeny)))
-    mirrors.append(Mirror("line", startpos=(screenx, 0), endpos=(screenx, screeny)))
-    mirrors.append(Mirror("line", startpos=(0, screeny), endpos=(screenx, screeny)))
     mirrors.append(
         Mirror(
             "ellipse",
