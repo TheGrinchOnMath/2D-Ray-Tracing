@@ -1,0 +1,96 @@
+{
+	"author": "thegrinchonmath",
+	"url": "",
+    "aspectRatio": [16, 9],
+    "compat": "fractions",
+	"mirrors": [
+		{
+			"type": "Line",
+			"startPos": [0.161875, 0.61111111111],
+			"endPos": [0.1615875, 0.53333333333]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.161875, 0.53333333333],
+			"endPos": [0.21875, 0.53333333333]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.21875, 0.61111111111],
+			"endPos": [0.21875, 0.53333333333]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.161875, 0.46666666666],
+			"endPos": [0.21875, 0.46666666666]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.161875, 0.46666666666],
+			"endPos": [0.161875, 0.38888888888]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.21875, 0.46666666666],
+			"endPos": [0.21875, 0.38888888888]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.78125, 0.61111111111],
+			"endPos": [0.78125, 0.53333333333]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.78125, 0.53333333333],
+			"endPos": [0.838125, 0.53333333333]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.838125, 0.53333333333],
+			"endPos": [0.838125, 0.61111111111]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.78125, 0.466666666666],
+			"endPos": [0.78125, 0.38888888888]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.78125, 0.46666666666],
+			"endPos": [0.838125, 0.46666666666]
+		},
+        {
+			"type": "Line",
+			"startPos": [0.838125, 0.4666666666],
+			"endPos": [0.838125, 0.3888888888]
+		},
+		{
+			"type": "EllipticArc",
+			"center": [0.78125, 0.5],
+			"eccentricity": [0.0625, 0.11111111111],
+			"startAngle": 270,
+			"endAngle": 90
+		},
+		{
+			"type": "EllipticArc",
+			"center": [0.21875, 0.5],
+			"eccentricity": [0.0625, 0.11111111111],
+			"startAngle": 90,
+			"endAngle": 270
+		},
+		{
+			"type": "EllipticArc",
+			"center": [0.5, 0.61111111111],
+			"eccentricity": [0.338125, 0.33333333333],
+			"startAngle": 0,
+			"endAngle": 180
+		},
+		{
+			"type": "EllipticArc",
+			"center": [0.5, 0.38888888888],
+			"eccentricity": [0.338125, 0.33333333333],
+			"startAngle": 180,
+			"endAngle": 360
+		}
+	]
+}

@@ -30,9 +30,9 @@ THE JSON FILES CONTAIN FRACTIONS OF SCREENX AND SCREENY
 """
 
 mirrors = []
-RAYS = 100
-REFLECTIONS = 2
-RAY_COLOR = (255, 255, 50, 100)
+RAYS = 51
+REFLECTIONS = 20
+RAY_COLOR = (255, 255, 50, 150)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
 prec = 10**-12
@@ -156,21 +156,19 @@ class Mirror:
                 #if collisionAngle > self.endAngle or collisionAngle < self.startAngle:
                     #pg.draw.circle(screen, "green", collidePos, 7)
 
-                return (
-                    collidePos
-                    if (
-                        collisionAngle <= self.endAngle
-                        and collisionAngle >= self.startAngle
-                    )
-                    else None
-                )
+                # this does not work for all orientations sadly
+                if collisionAngle <= self.endAngle and collisionAngle >= self.startAngle:
+                    return collidePos
+                else:
+                    return None
+                
 
     def draw(self, color, screen):
         if self.type == "line":
-            pg.draw.aaline(screen, color, self.startPos, self.endPos, self.size)
+            pg.draw.line(screen, color, self.startPos, self.endPos, self.size)
 
         elif self.type == "EllipticArc":
-            pg.draw.circle(
+            """pg.draw.circle(
                 screen,
                 "white",
                 (
@@ -178,7 +176,7 @@ class Mirror:
                     self.center[1],
                 ),
                 7,
-            )
+            )"""
             topleft = pg.Vector2(self.center) - pg.Vector2(self.eccentricity)
             rect = pg.Rect(
                 topleft[0],
@@ -192,7 +190,7 @@ class Mirror:
                 rect,
                 (self.startAngle + 180) * 2 * np.pi / 360,
                 (self.endAngle + 180) * 2 * np.pi / 360,
-                4,
+                3,
             )
 
     def normal(self, intersect):
@@ -451,7 +449,7 @@ def generateMirrors(type: str, abspath: str):
 
 # path = pathFiddler(["assets", "img", "penrose_unilluminable_room.png"])
 # generateMirrors("image", path)
-path = pathFiddler(["assets", "json", "test_1.json"])
+path = pathFiddler(["assets", "json", "penrose_unilluminable_room.json"])
 generateMirrors("json", path)
 
 
