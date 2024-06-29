@@ -2,12 +2,12 @@
 	"author": "",
 	"url": "",
     "aspectRatio": [16, 9],
-    "compat": "fractions",
+    "compat": "pixels",
 	"mirrors": [
 		{
 			"type": "EllipticArc",
-			"center": [0.5, 0.5],
-			"eccentricity": [0.42857142857142857142857142857143, 0.4],
+			"center": [960, 540],
+			"eccentricity": [300, 200],
 			"startAngle": 0,
 			"endAngle": 180
 		}

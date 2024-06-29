@@ -116,7 +116,33 @@ class Mirror:
                 # the case where the origin is outside the ellipse.
                 x = o1 + c1 + m2 * v1
                 y = o2 + c2 + m2 * v2
-                collidePos = (x, y)
+                collidePos2 = (x, y)
+                collidePos1 = (o1 + c1 + m1 * v1, o2 + c2 + m1 * v2)
+
+                # once collision has been calculated, compare the angle of vect CP to the angle that was set in variable
+                # this code is to distinguish when two collisions are present but one is to be ignored due to the ellipse not being full
+
+                # m1
+                angleVec1 = pg.Vector2(
+                    self.center[0] - collidePos1[0], self.center[1] - collidePos1[1]
+                )
+                collisionAngle1 = angleVec1.angle_to(ANGLE_REF_VEC)
+                # convert the collisionAngle to a positive one, since angles are on a circle and therefore modulus is appropriate
+                collisionAngle1 = (collisionAngle1 + 360) % 360
+                # m2 
+                angleVec2 = pg.Vector2(
+                    self.center[0] - collidePos2[0], self.center[1] - collidePos2[1]
+                )
+                collisionAngle2 = angleVec2.angle_to(ANGLE_REF_VEC)
+                # convert the collisionAngle to a positive one, since angles are on a circle and therefore modulus is appropriate
+                collisionAngle2 = (collisionAngle2 + 360) % 360
+
+                if collisionAngle2 <= self.endAngle and collisionAngle2 >= self.startAngle: 
+                    collidePos = collidePos2
+                else:
+                    if collisionAngle1 <= self.endAngle and collisionAngle1 >= self.startAngle: 
+                        collidePos = collidePos1
+                
 
             # once collision has been calculated, compare the angle of CP to the angle that was set in variable
             if collidePos is not None:
@@ -126,6 +152,9 @@ class Mirror:
                 collisionAngle = angleVec.angle_to(ANGLE_REF_VEC)
                 # convert the collisionAngle to a positive one, since angles are on a circle and therefore modulus is appropriate
                 collisionAngle = (collisionAngle + 360) % 360
+
+                #if collisionAngle > self.endAngle or collisionAngle < self.startAngle:
+                    #pg.draw.circle(screen, "green", collidePos, 7)
 
                 return (
                     collidePos
@@ -201,10 +230,8 @@ def rayPhysicsHandler(matrix):
                 normal = mirror.normal(result)
 
     if closest is not None:
-
-        pg.draw.circle(screen, "blue", closest, 5, 5)
         newVector = vect.reflect(normal)
-        #pg.draw.line(screen, (100, 100, 255), closest, closest + normal.normalize() * 50, 2)
+        # pg.draw.line(screen, (100, 100, 255), closest, closest + normal.normalize() * 50, 2)
         output = [
             startPos[0],
             startPos[1],
@@ -373,34 +400,61 @@ def generateMirrors(type: str, abspath: str):
         mirrorList = jsonFile["mirrors"]
 
         for mirror in mirrorList:
-            if mirror["type"] == "Line":
-                startpos = (
-                    mirror["startPos"][0] * screenx,
-                    mirror["startPos"][1] * screeny,
-                )
-                endpos = (mirror["endPos"][0] * screenx, mirror["endPos"][1] * screeny)
-                mirrors.append(Mirror("line", startpos=startpos, endpos=endpos))
-            elif mirror["type"] == "EllipticArc":
-                c = (mirror["center"][0] * screenx, mirror["center"][1] * screeny)
-                e = (
-                    mirror["eccentricity"][0] * screenx,
-                    mirror["eccentricity"][1] * screeny,
-                )
-                mirrors.append(
-                    Mirror(
-                        "EllipticArc",
-                        center=c,
-                        eccentricity=e,
-                        startAngle=mirror["startAngle"],
-                        endAngle=mirror["endAngle"],
+            if jsonFile["compat"] == "fractions":
+                if mirror["type"] == "Line":
+                    startpos = (
+                        mirror["startPos"][0] * screenx,
+                        mirror["startPos"][1] * screeny,
                     )
-                )
+                    endpos = (
+                        mirror["endPos"][0] * screenx,
+                        mirror["endPos"][1] * screeny,
+                    )
+                    mirrors.append(Mirror("line", startpos=startpos, endpos=endpos))
+                elif mirror["type"] == "EllipticArc":
+                    c = (mirror["center"][0] * screenx, mirror["center"][1] * screeny)
+                    e = (
+                        mirror["eccentricity"][0] * screenx,
+                        mirror["eccentricity"][1] * screeny,
+                    )
+                    mirrors.append(
+                        Mirror(
+                            "EllipticArc",
+                            center=c,
+                            eccentricity=e,
+                            startAngle=mirror["startAngle"],
+                            endAngle=mirror["endAngle"],
+                        )
+                    )
+            elif jsonFile["compat"] == "pixels":
+                if mirror["type"] == "Line":
+                    startpos = (
+                        mirror["startPos"][0] * screenx,
+                        mirror["startPos"][1] * screeny,
+                    )
+                    endpos = (
+                        mirror["endPos"][0] * screenx,
+                        mirror["endPos"][1] * screeny,
+                    )
+                    mirrors.append(Mirror("line", startpos=startpos, endpos=endpos))
+                elif mirror["type"] == "EllipticArc":
+                    mirrors.append(
+                        Mirror(
+                            "EllipticArc",
+                            center=tuple(mirror["center"]),
+                            eccentricity=tuple(mirror["eccentricity"]),
+                            startAngle=mirror["startAngle"],
+                            endAngle=mirror["endAngle"],
+                        )
+                    )
 
 
 # path = pathFiddler(["assets", "img", "penrose_unilluminable_room.png"])
 # generateMirrors("image", path)
 path = pathFiddler(["assets", "json", "test_1.json"])
 generateMirrors("json", path)
+
+
 def main():
     global mousePos
     layers = screen.copy()
