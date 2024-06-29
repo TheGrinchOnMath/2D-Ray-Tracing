@@ -19,12 +19,15 @@ screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
-RAYS = 250
-REFLECTIONS = 50
-RAY_COLOR = (255, 255, 50, 2)
+RAYS = 30
+REFLECTIONS = 1
+RAY_COLOR = (255, 255, 50, 255)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
-prec = 10**-10
+prec = 10**-12
+ANGLE_REF_VEC = pg.Vector2(1, 0)
+multiprocessing = False
+antialiasing = False
 
 
 class Mirror:
@@ -37,11 +40,13 @@ class Mirror:
         elif type == "ellipse":
             self.center = kwargs["center"]
             self.eccentricity = kwargs["offset"]
+            self.startAngle = kwargs["startAngle"]
+            self.endAngle = kwargs["endAngle"]
 
     def intersect(self, startPos, Vect):
-        global check_count
         p1, p2 = startPos
         v1, v2 = Vect
+        collidePos = None
 
         if self.type == "line":
             a1, a2 = self.startPos
@@ -87,24 +92,35 @@ class Mirror:
             if m1 > prec and m2 < prec:
                 x = o1 + c1 + m1 * v1
                 y = o2 + c2 + m1 * v2
-                collidepos_1 = (x, y)
-                return collidepos_1
+                collidePos = (x, y)
             # could implement search with small steps to compare when steps find something and intersect finds none
             elif m2 > prec and m1 < prec:
                 x = o1 + c1 + m2 * v1
                 y = o2 + c2 + m2 * v2
-                collidepos_2 = (x, y)
-                print(m1, m2)
-                return collidepos_2
+                collidePos = (x, y)
 
             elif m1 > prec and m2 > prec:
                 # this works since m2 is smaller than m1. this logic covers
                 # the case where the origin is outside the ellipse.
                 x = o1 + c1 + m2 * v1
                 y = o2 + c2 + m2 * v2
-                collidepos = (x, y)
-                pg.draw.circle(screen, "blue", (x, y), 3)
-                return collidepos
+                collidePos = (x, y)
+
+            # once collision has been calculated, compare the angle of CP to the angle that was set in variable
+            if collidePos is not None:
+                angleVec = pg.Vector2(self.center[0] - collidePos[0], self.center[1] - collidePos[1])
+                print(angleVec)
+                collisionAngle = angleVec.angle_to(ANGLE_REF_VEC)
+                # convert the collisionAngle to a positive one, since angles are on a circle and therefore modulus is appropriate
+                collisionAngle = (collisionAngle + 3600) % 360
+                
+                # print(collisionAngle)
+                return (
+                    collidePos
+                    if (collisionAngle <= self.endAngle
+                    and collisionAngle >= self.startAngle)
+                    else None
+                )
 
     def draw(self, color, screen):
         if self.type == "line":
@@ -177,10 +193,10 @@ def rayPhysicsHandler(matrix):
     return output
 
 
-def distributor(option, rayMatrix):
+def distributor(multiprocessing, rayMatrix):
     output = np.empty((RAYS, 6))
     errors = 0
-    if option:
+    if multiprocessing:
         with ProcessPoolExecutor(max_workers=CORE_COUNT) as executor:
             _out = executor.map(rayPhysicsHandler, rayMatrix)
 
@@ -192,10 +208,10 @@ def distributor(option, rayMatrix):
     else:
         for i in range(RAYS):
             out = rayPhysicsHandler(rayMatrix[i])
-        try:
-            output[i] = out
-        except ValueError:
-            errors += 1
+            try:
+                output[i] = out
+            except ValueError:
+                errors += 1
 
     print(
         f"error count for frame no ({frame_counter}): {errors}"
@@ -203,7 +219,7 @@ def distributor(option, rayMatrix):
     return output
 
 
-def render(rayMatrix, reset, layers):
+def render(rayMatrix, reset, layers, antialiasing, multiprocessing):
     global counter, frame_counter
     BGCOLOR = (10, 10, 10)
     output = np.empty((RAYS, 4))
@@ -226,7 +242,7 @@ def render(rayMatrix, reset, layers):
         for mirror in mirrors:
             mirror.draw("white", screen)
         print(f"calculating intersections for {RAYS} rays...")
-        newMatrix = distributor(True, rayMatrix)
+        newMatrix = distributor(multiprocessing, rayMatrix)
         print("done!")
 
         # color = (random.randint(0, 255), random.randint(0, 255), random.randint(0, 255))
@@ -241,6 +257,14 @@ def render(rayMatrix, reset, layers):
                 (startPos_x, startPos_y),
                 (intersect_x, intersect_y),
                 1,
+            ) if antialiasing else (
+                pg.draw.line(
+                    screen,
+                    RAY_COLOR,
+                    (startPos_x, startPos_y),
+                    (intersect_x, intersect_y),
+                    1,
+                )
             )
             output[i] = [intersect_x, intersect_y, vector_x, vector_y]
         layers.blit(screen, (0, 0))
@@ -261,15 +285,17 @@ def generateMirrors():
         [(0, 0), (screenx, 0)],
         [(0, 0), (0, screeny)],
         [(screenx, 0), (screenx, screeny)],
-        [(0, screeny), (screenx, screeny)]
+        [(0, screeny), (screenx, screeny)],
     ]
-    """
+    (
+        """
         [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 2 / 5)],
         [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 2 / 5, screeny * 3 / 5)],
         [(screenx * 3 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
         [(screenx * 2 / 5, screeny * 3 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
     """,
-    
+    )
+
     for li in LineMirrorCoords:
         mirrors.append(Mirror("line", startpos=li[0], endpos=li[1]))
 
@@ -278,6 +304,8 @@ def generateMirrors():
             "ellipse",
             center=(screenx / 2, screeny / 2),
             offset=(screenx * 3 / 7, screeny * 2 / 5),
+            startAngle=180,
+            endAngle=270,
         )
     )
 
@@ -287,7 +315,7 @@ def main():
     layers = screen.copy()
     generateMirrors()
     time_current = time.perf_counter()
-    rayMatrix = render(np.empty((RAYS, 4)), True, layers)
+    rayMatrix = render(np.empty((RAYS, 4)), True, layers, antialiasing, multiprocessing)
     quit = False
     while not quit:
         for event in pg.event.get():
@@ -299,14 +327,16 @@ def main():
 
                 if event.key == pg.K_SPACE:
                     mousePos = pg.mouse.get_pos()
-                    rayMatrix = render(np.empty((RAYS, 4)), True, layers)
+                    rayMatrix = render(
+                        np.empty((RAYS, 4)), True, layers, antialiasing, multiprocessing
+                    )
         if counter <= REFLECTIONS:
-            rayMatrix = render(rayMatrix, False, layers)
+            rayMatrix = render(rayMatrix, False, layers, antialiasing, multiprocessing)
 
         time_new = time.perf_counter()
-        # print(
-        #    f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
-        # )
+        print(
+            f"Time for frame({frame_counter}): {time_new - time_current:0.4f} seconds"
+        ) if counter <= REFLECTIONS else None
         time_current = time_new
 
     sys.exit()
