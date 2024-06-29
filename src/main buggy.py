@@ -3,6 +3,8 @@ import numpy as np
 import time
 import sys
 import os
+import json
+import cv2
 from concurrent.futures import ProcessPoolExecutor
 
 CORE_COUNT = os.cpu_count()
@@ -12,20 +14,30 @@ def clear():
     os.system("cls" if os.name == "nt" else "clear")
 
 
+# change the values in the tuple for manual display size setting
+screenx, screeny = (0, 0)
+args = pg.HWSURFACE | pg.FULLSCREEN if screenx == 0 and screeny == 0 else pg.HWSURFACE
 pg.init()
-display = pg.display.set_mode((0, 0), pg.HWSURFACE | pg.FULLSCREEN)
+display = pg.display.set_mode((screenx, screeny), args)
 screenx, screeny = display.get_size()
 screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
+"""
+THE ASPECT RATIO HAS TO BE 16:9 FOR THE JSON FILES
+if necessary just set screenx and screeny manually
+THE JSON FILES CONTAIN FRACTIONS OF SCREENX AND SCREENY
+"""
+
 mirrors = []
-RAYS = 30
-REFLECTIONS = 1
-RAY_COLOR = (255, 255, 50, 255)
+RAYS = 100
+REFLECTIONS = 2
+RAY_COLOR = (255, 255, 50, 100)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
 prec = 10**-12
 ANGLE_REF_VEC = pg.Vector2(1, 0)
+# avoid on windows for now
 multiprocessing = False
 antialiasing = False
 
@@ -37,9 +49,9 @@ class Mirror:
             self.startPos = kwargs["startpos"]
             self.endPos = kwargs["endpos"]
             self.size = 3
-        elif type == "ellipse":
+        elif type == "EllipticArc":
             self.center = kwargs["center"]
-            self.eccentricity = kwargs["offset"]
+            self.eccentricity = kwargs["eccentricity"]
             self.startAngle = kwargs["startAngle"]
             self.endAngle = kwargs["endAngle"]
 
@@ -67,7 +79,7 @@ class Mirror:
             else:
                 return None
 
-        elif self.type == "ellipse":
+        elif self.type == "EllipticArc":
             a, b = self.eccentricity
             c1, c2 = self.center
             o1, o2 = (p1 - c1, p2 - c2)
@@ -108,17 +120,19 @@ class Mirror:
 
             # once collision has been calculated, compare the angle of CP to the angle that was set in variable
             if collidePos is not None:
-                angleVec = pg.Vector2(self.center[0] - collidePos[0], self.center[1] - collidePos[1])
-                print(angleVec)
+                angleVec = pg.Vector2(
+                    self.center[0] - collidePos[0], self.center[1] - collidePos[1]
+                )
                 collisionAngle = angleVec.angle_to(ANGLE_REF_VEC)
                 # convert the collisionAngle to a positive one, since angles are on a circle and therefore modulus is appropriate
-                collisionAngle = (collisionAngle + 3600) % 360
-                
-                # print(collisionAngle)
+                collisionAngle = (collisionAngle + 360) % 360
+
                 return (
                     collidePos
-                    if (collisionAngle <= self.endAngle
-                    and collisionAngle >= self.startAngle)
+                    if (
+                        collisionAngle <= self.endAngle
+                        and collisionAngle >= self.startAngle
+                    )
                     else None
                 )
 
@@ -126,7 +140,7 @@ class Mirror:
         if self.type == "line":
             pg.draw.aaline(screen, color, self.startPos, self.endPos, self.size)
 
-        elif self.type == "ellipse":
+        elif self.type == "EllipticArc":
             pg.draw.circle(
                 screen,
                 "white",
@@ -157,7 +171,7 @@ class Mirror:
             return pg.Vector2(
                 self.endPos[1] - self.startPos[1], self.startPos[0] - self.endPos[0]
             )
-        if self.type == "ellipse":
+        if self.type == "EllipticArc":
             # the key here is to adjust the intersections for an ellipse placed at origin
             vect = pg.Vector2(
                 2 * (intersect[0] - self.center[0]) / (self.eccentricity[0] ** 2),
@@ -187,8 +201,10 @@ def rayPhysicsHandler(matrix):
                 normal = mirror.normal(result)
 
     if closest is not None:
+
+        pg.draw.circle(screen, "blue", closest, 5, 5)
         newVector = vect.reflect(normal)
-        # pg.draw.line(screen, (100, 100, 255), closest, closest + normal.normalize() * 50, 2)
+        #pg.draw.line(screen, (100, 100, 255), closest, closest + normal.normalize() * 50, 2)
         output = [
             startPos[0],
             startPos[1],
@@ -286,41 +302,108 @@ def render(rayMatrix, reset, layers, antialiasing, multiprocessing):
     return output
 
 
-def generateMirrors():
+def cv2EdgeFind(PATH):
+    # read image with cv2, nize it to fit display
+    img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
+    img = cv2.resize(img_temp, (screenx, screeny))
+
+    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours:
+        approx = cv2.approxPolyDP(cnt, 1, True)
+        n = approx.ravel()
+    return n
+
+
+def pathFiddler(dir: list):
+    # this function takes a list of folders and the file to be used
+    # as strings, and returns the full path to the file with syntax appropriate for the relevant operating system
+    temp = ""  # temporary, for use whilst concatenating the directories in the dir variable
+    result = ""  # will contain the final string that is returned by this function
+    for element in dir:  # creates a string containing the path from CWD to file
+        temp = os.path.join(temp, element)
+
+    for char in os.path.join(os.getcwd(), temp):
+        # this loop iterates through the string, and adds an extra backslash to escape the first one
+        # this avoids issues with backslashes being interpreted as syntax symbols such as \n or \t
+        if char == ("\\" or "/"):
+            result += char
+        result += char
+    return result
+
+
+def generateMirrors(type: str, abspath: str):
     global mirrors
+
     LineMirrorCoords = [
         [(0, 0), (screenx, 0)],
         [(0, 0), (0, screeny)],
         [(screenx, 0), (screenx, screeny)],
         [(0, screeny), (screenx, screeny)],
     ]
-    (
-        """
-        [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 2 / 5)],
-        [(screenx * 2 / 5, screeny * 2 / 5), (screenx * 2 / 5, screeny * 3 / 5)],
-        [(screenx * 3 / 5, screeny * 2 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
-        [(screenx * 2 / 5, screeny * 3 / 5), (screenx * 3 / 5, screeny * 3 / 5)],
-    """,
-    )
 
     for li in LineMirrorCoords:
         mirrors.append(Mirror("line", startpos=li[0], endpos=li[1]))
 
-    mirrors.append(
-        Mirror(
-            "ellipse",
-            center=(screenx / 2, screeny / 2),
-            offset=(screenx * 3 / 7, screeny * 2 / 5),
-            startAngle=180,
-            endAngle=270,
-        )
-    )
+    if type == "image":
+        n = cv2EdgeFind(abspath)
+        mirrors.append(Mirror("line", startpos=(n[-2], n[-1]), endpos=(n[0], n[1])))
+        mirrors.append(Mirror("line", startpos=(n[-4], n[-3]), endpos=(n[-2], n[-1])))
+        for i in range(len(n)):
+            if (i % 2 == 0) and len(n) - 4 >= i:
+                if n[i] == n[-4]:
+                    pass
+                else:
+                    mirrors.append(
+                        Mirror(
+                            "line",
+                            startpos=(n[i], n[i + 1]),
+                            endpos=(n[i + 2], n[i + 3]),
+                        )
+                    )
+
+    elif type == "json":
+        try:
+            with open(abspath, "r") as r:
+                jsonFile = json.load(r)
+        except FileNotFoundError:
+            print("File not found. Exiting...")
+            sys.exit()
+
+        mirrorList = jsonFile["mirrors"]
+
+        for mirror in mirrorList:
+            if mirror["type"] == "Line":
+                startpos = (
+                    mirror["startPos"][0] * screenx,
+                    mirror["startPos"][1] * screeny,
+                )
+                endpos = (mirror["endPos"][0] * screenx, mirror["endPos"][1] * screeny)
+                mirrors.append(Mirror("line", startpos=startpos, endpos=endpos))
+            elif mirror["type"] == "EllipticArc":
+                c = (mirror["center"][0] * screenx, mirror["center"][1] * screeny)
+                e = (
+                    mirror["eccentricity"][0] * screenx,
+                    mirror["eccentricity"][1] * screeny,
+                )
+                mirrors.append(
+                    Mirror(
+                        "EllipticArc",
+                        center=c,
+                        eccentricity=e,
+                        startAngle=mirror["startAngle"],
+                        endAngle=mirror["endAngle"],
+                    )
+                )
 
 
+# path = pathFiddler(["assets", "img", "penrose_unilluminable_room.png"])
+# generateMirrors("image", path)
+path = pathFiddler(["assets", "json", "test_1.json"])
+generateMirrors("json", path)
 def main():
     global mousePos
     layers = screen.copy()
-    generateMirrors()
     time_current = time.perf_counter()
     rayMatrix = render(np.empty((RAYS, 4)), True, layers, antialiasing, multiprocessing)
     quit = False

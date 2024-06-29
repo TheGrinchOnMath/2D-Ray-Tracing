@@ -1,0 +1,19 @@
+{
+	"author": "",
+	"url": "",
+    "aspectRatio": [16, 9],
+	"mirrors": [
+		{
+			"type": "Line",
+			"startPos": [0, 0],
+			"endPos": [0, 0]
+		},
+		{
+			"type": "EllipticArc",
+			"center": [0, 0],
+			"eccentricity": [0, 0],
+			"startAngle": 0.0,
+			"endAngle": 0.0
+		}
+	]
+}
