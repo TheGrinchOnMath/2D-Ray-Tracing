@@ -20,15 +20,15 @@ screen = pg.Surface((screenx, screeny), pg.SRCALPHA)
 mousePos = (screenx / 2, screeny / 2)
 
 mirrors = []
-RAYS = 30
-REFLECTIONS = 1
-RAY_COLOR = (255, 255, 50, 255)
+RAYS = 1000
+REFLECTIONS = 100
+RAY_COLOR = (255, 255, 50, 5)
 frame_counter = 0
 # this variable is to avoid inaccuracy errors
 prec = 10**-12
 ANGLE_REF_VEC = pg.Vector2(1, 0)
-multiprocessing = False
-antialiasing = False
+multiprocessing = True
+antialiasing = True
 
 
 class Mirror:
@@ -321,6 +321,16 @@ def generateMirrors():
 
     n = cv2EdgeFind("./assets/img/penrose_unilluminable_room.png")
 
+
+    mirrors.append(Mirror("line", startpos=(n[-2], n[-1]), endpos=(n[0], n[1])))
+    mirrors.append(Mirror("line", startpos=(n[-4], n[-3]), endpos=(n[-2], n[-1])))
+    for i in range(len(n)):
+        if (i % 2 == 0) and len(n) - 4 >= i:
+            if n[i] == n[-4]:
+                pass
+            else:
+                mirrors.append(Mirror("line", startpos=(n[i], n[i + 1]), endpos=(n[i + 2], n[i + 3])))
+"""
     mirrors.append(
         Mirror(
             "ellipse",
@@ -330,7 +340,7 @@ def generateMirrors():
             endAngle=270,
         )
     )
-
+"""
 
 def main():
     global mousePos
