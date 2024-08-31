@@ -1,6 +1,7 @@
 import pygame as pg
 import numpy as np
 import time
+import cv2
 import sys
 import os
 from concurrent.futures import ProcessPoolExecutor
@@ -285,6 +286,18 @@ def render(rayMatrix, reset, layers, antialiasing, multiprocessing):
     frame_counter += 1
     return output
 
+def cv2EdgeFind(PATH):
+    # read image with cv2, nize it to fit display
+    img_temp = cv2.imread(PATH, cv2.IMREAD_GRAYSCALE)
+    img = cv2.resize(img_temp, (screenx, screeny))
+
+    _, threshold = cv2.threshold(img, 110, 255, cv2.THRESH_BINARY)
+    contours, _ = cv2.findContours(threshold, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    for cnt in contours:
+        approx = cv2.approxPolyDP(cnt, 1, True)
+        n = approx.ravel()
+    return n
+
 
 def generateMirrors():
     global mirrors
@@ -305,6 +318,8 @@ def generateMirrors():
 
     for li in LineMirrorCoords:
         mirrors.append(Mirror("line", startpos=li[0], endpos=li[1]))
+
+    n = cv2EdgeFind("./assets/img/penrose_unilluminable_room.png")
 
     mirrors.append(
         Mirror(
